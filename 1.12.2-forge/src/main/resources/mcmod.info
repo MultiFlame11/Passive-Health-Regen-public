@@ -1,0 +1,16 @@
+[
+  {
+    "modid": "passiveregen",
+    "name": "Passive Health Regen",
+    "description": "Configurable passive out-of-combat regeneration without a potion effect.",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "",
+    "updateUrl": "",
+    "authorList": ["miche"],
+    "credits": "",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]

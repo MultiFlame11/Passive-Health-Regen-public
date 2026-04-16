@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "passiveregen",
+  "version": "${version}",
+  "name": "Passive Health Regen",
+  "description": "Configurable passive out-of-combat regeneration without a potion effect.",
+  "authors": [
+    "miche"
+  ],
+  "license": "All Rights Reserved",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "io.github.miche.passiveregen.PassiveRegenMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.14.0",
+    "minecraft": "~1.18.2",
+    "java": ">=17",
+    "fabric-api": "*"
+  }
+}

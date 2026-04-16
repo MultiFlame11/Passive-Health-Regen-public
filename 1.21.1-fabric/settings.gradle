@@ -1,0 +1,11 @@
+pluginManagement {
+    repositories {
+        maven {
+            name = "Fabric"
+            url = "https://maven.fabricmc.net/"
+        }
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = "passive-health-regen-1.21.1-fabric"

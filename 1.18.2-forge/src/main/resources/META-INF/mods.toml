@@ -1,0 +1,25 @@
+modLoader="javafml"
+loaderVersion="[40,)"
+license="All Rights Reserved"
+
+[[mods]]
+modId="passiveregen"
+version="1.1.2+1.18.2-forge"
+displayName="Passive Health Regen"
+description='''
+Configurable passive out-of-combat regeneration without a potion effect.
+'''
+
+[[dependencies.passiveregen]]
+    modId="forge"
+    mandatory=true
+    versionRange="[40,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.passiveregen]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.18.2,1.19)"
+    ordering="NONE"
+    side="BOTH"
