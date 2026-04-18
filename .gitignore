@@ -17,12 +17,3 @@ src/generated/
 *.iml
 Thumbs.db
 Desktop.ini
-
-# Private/internal files — never commit these
-.claude/
-FOR-REIMU.md
-HUD-REIMU.md
-HUD-SPEC.md
-upload-*/
-*.ps1
-*.py
