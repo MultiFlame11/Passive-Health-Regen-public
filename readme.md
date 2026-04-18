@@ -12,7 +12,18 @@ Made mostly because eating food just to top off HP gets old fast, especially wit
 - Requires a minimum hunger level before healing kicks in
 - Optional ramp-up mode that starts slow and builds up the longer you stay out of combat
 - Optional scaling for players with larger health pools
-- Server-side only
+- Stops regen above a configurable health percentage
+- Blocks regen while specific potion effects are active
+- Disable regen entirely in certain dimensions
+- Separate longer cooldown for PvP damage
+- HUD overlay showing your regen cooldown and active healing state (1.20.1 Fabric only for now)
+- Server-side only, except on 1.20.1 Fabric where the HUD requires client install too
+
+---
+
+## Addon
+
+**[Passive Regen Bandages](https://modrinth.com/mod/passive-regen-bandages)** adds craftable bandage items that instantly clear your regen cooldown and boost healing speed. Works best alongside this mod but can be used standalone.
 
 ---
 
@@ -24,11 +35,12 @@ Quick reference: 20 ticks = 1 second. 1 HP = half a heart. Default health bar is
 
 | Option | Default | Description |
 |---|---|---|
+| `enabled` | `true` | Master toggle. Set to false to disable the mod without uninstalling. |
 | `damageCooldownTicks` | `100` | Ticks without damage before healing starts. 100 = 5 seconds. |
-| `minimumHungerPercent` | `50` | Minimum hunger bar fill required to heal. 0 = any hunger, 50 = at least half, 100 = completely full. |
+| `minimumHungerPercent` | `50` | Minimum hunger bar fill required to heal. 0 = any hunger, 50 = half, 100 = full. |
 | `healAmountPerTrigger` | `0.5` | HP healed per trigger. 0.5 = quarter heart, 1.0 = half heart, 2.0 = full heart. |
-| `baseHealIntervalTicks` | `100` | Ticks between each heal at base rate. 100 = every 5 seconds. Vanilla Regen I is about every 50 ticks for reference. |
-| `updateIntervalTicks` | `20` | How often the mod checks players. 20 = once per second. Lower is more responsive but adds a bit more overhead. |
+| `baseHealIntervalTicks` | `100` | Ticks between each heal at base rate. 100 = every 5 seconds. |
+| `updateIntervalTicks` | `20` | How often the mod checks players. Lower is more responsive but adds a bit more overhead. |
 
 ### Ramp-up
 
@@ -37,7 +49,7 @@ Healing starts slow and speeds up the longer you stay out of combat. Off by defa
 | Option | Default | Description |
 |---|---|---|
 | `rampUpEnabled` | `false` | Enables ramp-up mode. |
-| `fullStrengthHealIntervalTicks` | `50` | Ticks between heals at full ramp-up speed. 50 = every 2.5 seconds. |
+| `fullStrengthHealIntervalTicks` | `50` | Ticks between heals at full ramp-up speed. |
 | `rampFullStrengthTicks` | `600` | Ticks out of combat before hitting full ramp-up speed. 600 = 30 seconds. |
 
 ### Health scaling
@@ -47,23 +59,48 @@ Heals faster for players with larger health pools. Off by default.
 | Option | Default | Description |
 |---|---|---|
 | `scaleWithMaxHealth` | `false` | Enables heal rate scaling based on max HP above 20. |
-| `maxHealthScalingExponent` | `0.5` | Curve for the scaling. 0.5 = square root, so a player with 80 HP heals about 2x as fast, not 4x. |
+| `maxHealthScalingExponent` | `0.5` | Curve for the scaling. 0.5 = square root, gentle curve. 1.0 = linear. |
 | `maxHealthScalingCap` | `2.0` | Maximum multiplier from health scaling. |
+
+### Conditions
+
+| Option | Default | Description |
+|---|---|---|
+| `maxRegenHealthPercent` | `100` | Regen stops when health reaches this percentage of max health. 80 = stops at 80%. |
+| `blockedEffects` | `[]` | List of effect IDs that pause regen while active. Example: `["minecraft:poison"]` |
+| `dimensionBlacklist` | `[]` | List of dimension IDs where regen is disabled. Example: `["minecraft:the_nether"]` |
+| `pvpDamageCooldownTicks` | `-1` | Separate cooldown after taking damage from another player. -1 = same as regular cooldown. |
+
+---
+
+## Developer API
+
+Addon mods can interact with the regen system via the public API.
+
+```java
+// Clears the damage cooldown so regen starts on the next tick
+PassiveRegenAPI.clearDamageCooldown(player.getUUID());
+
+// Applies a temporary regen speed multiplier
+// 1.5 = 50% faster, 2.0 = double speed
+// durationTicks = how long the boost lasts
+PassiveRegenAPI.applyRegenBoost(player.getUUID(), multiplier, durationTicks);
+
+// Check if the mod is loaded before calling (useful for optional dependencies)
+if (PassiveRegenAPI.isAvailable()) { ... }
+```
+
+Declare as an optional dependency in your `fabric.mod.json` or `mods.toml`.
 
 ---
 
 ## Versions
 
-| Version | Loader | Jar |
-|---|---|---|
-| 1.12.2 | Forge | `passive-health-regen-1.1.2+1.12.2-forge.jar` |
-| 1.16.5 | Forge | `passive-health-regen-1.1.2+1.16.5-forge.jar` |
-| 1.16.5 | Fabric | `passive-health-regen-1.1.2+1.16.5-fabric.jar` |
-| 1.18.2 | Forge | `passive-health-regen-1.1.2+1.18.2-forge.jar` |
-| 1.18.2 | Fabric | `passive-health-regen-1.1.2+1.18.2-fabric.jar` |
-| 1.20.1 | Forge | `passive-health-regen-1.1.2+1.20.1-forge.jar` |
-| 1.20.1 | NeoForge | `passive-health-regen-1.1.2+1.20.1-neoforge.jar` |
-| 1.20.1 | Fabric | `passive-health-regen-1.1.2+1.20.1-fabric.jar` |
-| 1.21.1 | Forge | `passive-health-regen-1.1.2+1.21.1-forge.jar` |
-| 1.21.1 | NeoForge | `passive-health-regen-1.1.2+1.21.1-neoforge.jar` |
-| 1.21.1 | Fabric | `passive-health-regen-1.1.2+1.21.1-fabric.jar` |
+| Version | Loader |
+|---|---|
+| 1.12.2 | Forge |
+| 1.16.5 | Forge, Fabric |
+| 1.18.2 | Forge, Fabric |
+| 1.20.1 | Forge, NeoForge, Fabric |
+| 1.20.4 | NeoForge |
+| 1.21.1 | Forge, NeoForge, Fabric |
