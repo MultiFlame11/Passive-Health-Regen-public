@@ -12,7 +12,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '1.1.2+1.21.1-forge'
+version = '1.2.0+1.21.1-forge'
 group = 'io.github.miche.passiveregen'
 archivesBaseName = 'passive-health-regen'
 
@@ -54,11 +54,11 @@ jar {
     manifest {
         attributes([
             'Specification-Title'     : 'passiveregen',
-            'Specification-Vendor'    : 'miche',
+            'Specification-Vendor'    : 'MultiFlame',
             'Specification-Version'   : '1',
             'Implementation-Title'    : project.name,
             'Implementation-Version'  : "${version}",
-            'Implementation-Vendor'   : 'miche',
+            'Implementation-Vendor'   : 'MultiFlame',
             'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }

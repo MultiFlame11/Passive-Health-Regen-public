@@ -1,0 +1,39 @@
+plugins {
+    id 'net.neoforged.gradle.userdev' version '7.0.192'
+}
+
+version = '1.2.0'
+group = 'io.github.miche.passiveregen'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+runs {
+    configureEach {
+        modSource project.sourceSets.main
+    }
+    client {}
+    server {}
+}
+
+dependencies {
+    implementation "net.neoforged:neoforge:20.4.251"
+}
+
+jar {
+    archiveFileName = "passive-health-regen-${version}+1.20.4-neoforge.jar"
+    manifest {
+        attributes([
+            'Specification-Title'     : 'passiveregen',
+            'Specification-Vendor'    : 'MultiFlame',
+            'Specification-Version'   : '1',
+            'Implementation-Title'    : project.name,
+            'Implementation-Version'  : "${version}",
+            'Implementation-Vendor'   : 'MultiFlame',
+            'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}

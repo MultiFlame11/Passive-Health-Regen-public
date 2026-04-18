@@ -1,5 +1,7 @@
 package io.github.miche.passiveregen;
 
+import io.github.miche.passiveregen.api.IPassiveRegenInternals;
+import io.github.miche.passiveregen.api.PassiveRegenAPI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -7,11 +9,40 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
-public class PassiveRegenHandler {
+public class PassiveRegenHandler implements IPassiveRegenInternals {
     private final Map<UUID, Long> lastDamageTicks = new HashMap<>();
+    private final Map<UUID, RegenBoost> activeBoosts = new HashMap<>();
+    static volatile long serverTick = 0;
+
+    public PassiveRegenHandler() {
+        PassiveRegenAPI.register(this);
+    }
+
+    // ── PassiveRegenAPI implementation ────────────────────────────────────────
+
+    @Override
+    public void clearDamageCooldown(UUID playerUUID) {
+        // 0L = "last damaged at world tick zero" — cooldown is always expired by the time
+        // a player can use an item, so regen starts on the very next handler tick.
+        lastDamageTicks.put(playerUUID, 0L);
+    }
+
+    @Override
+    public void applyRegenBoost(UUID playerUUID, double multiplier, int durationTicks) {
+        double m = Math.max(1.0, multiplier);
+        long expiresAt = serverTick + durationTicks;
+        RegenBoost existing = activeBoosts.get(playerUUID);
+        // Highest multiplier wins. Equal multiplier refreshes duration.
+        if (existing == null || m >= existing.multiplier) {
+            activeBoosts.put(playerUUID, new RegenBoost(m, expiresAt));
+        }
+    }
+
+    // ── Event handlers ────────────────────────────────────────────────────────
 
     @SubscribeEvent
     public void onLivingDamage(LivingDamageEvent.Pre event) {
@@ -25,7 +56,14 @@ public class PassiveRegenHandler {
         }
 
         Player player = (Player) living;
-        lastDamageTicks.put(player.getUUID(), player.level().getGameTime());
+        long now = player.level().getGameTime();
+        int pvpCooldown = PassiveRegenConfig.PVP_DAMAGE_COOLDOWN_TICKS.get();
+        if (pvpCooldown >= 0 && event.getSource().getEntity() instanceof Player) {
+            long adjustedTick = now - PassiveRegenConfig.DAMAGE_COOLDOWN_TICKS.get() + pvpCooldown;
+            lastDamageTicks.put(player.getUUID(), adjustedTick);
+        } else {
+            lastDamageTicks.put(player.getUUID(), now);
+        }
     }
 
     @SubscribeEvent
@@ -35,39 +73,124 @@ public class PassiveRegenHandler {
             return;
         }
 
+        long now = player.level().getGameTime();
+        serverTick = now;
+
+        // Disable vanilla natural regen by draining food exhaustion
+        if (PassiveRegenConfig.DISABLE_NATURAL_REGEN.get()) {
+            if (player.getFoodData().getFoodLevel() >= 18 && player.getFoodData().getSaturationLevel() > 0) {
+                player.causeFoodExhaustion(0.1F);
+            }
+        }
+
         if (!shouldProcessPlayer(player)) {
             return;
         }
 
-        long now = player.level().getGameTime();
         int updateTicks = Math.max(1, PassiveRegenConfig.UPDATE_INTERVAL_TICKS.get());
         if ((now + player.getId()) % updateTicks != 0L) {
             return;
         }
 
+        int foodLevel = player.getFoodData().getFoodLevel();
+
         UUID playerId = player.getUUID();
-        long lastDamageTick = lastDamageTicks.computeIfAbsent(playerId, unused -> now);
+        Long lastDamageTick = lastDamageTicks.get(playerId);
+        if (lastDamageTick == null) {
+            return;
+        }
         long outOfCombatTicks = now - lastDamageTick;
-        if (outOfCombatTicks < PassiveRegenConfig.DAMAGE_COOLDOWN_TICKS.get()) {
+        int effectiveCooldown = PassiveRegenConfig.getEffectiveDamageCooldown(foodLevel);
+        if (outOfCombatTicks < effectiveCooldown) {
             return;
         }
 
-        float healAmount = PassiveRegenConfig.getHealAmountPerUpdate(outOfCombatTicks, player.getMaxHealth());
+        float healAmount = PassiveRegenConfig.getHealAmountPerUpdate(outOfCombatTicks, player.getMaxHealth(), foodLevel);
+
+        RegenBoost boost = activeBoosts.get(playerId);
+        if (boost != null) {
+            if (now >= boost.expiresAt) {
+                activeBoosts.remove(playerId);
+            } else {
+                healAmount = (float) (healAmount * boost.multiplier);
+            }
+        }
+
         if (healAmount > 0.0F) {
             player.heal(healAmount);
         }
     }
 
     @SubscribeEvent
-    public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
-        lastDamageTicks.remove(event.getEntity().getUUID());
+    public void onLivingDeath(LivingDeathEvent event) {
+        if (!PassiveRegenConfig.ENABLED.get() || !PassiveRegenConfig.REGEN_ON_KILL_ENABLED.get()) {
+            return;
+        }
+        if (!(event.getSource().getEntity() instanceof Player)) {
+            return;
+        }
+        Player killer = (Player) event.getSource().getEntity();
+        if (killer.level().isClientSide) return;
+        UUID killerId = killer.getUUID();
+        Long lastDamageTick = lastDamageTicks.get(killerId);
+        if (lastDamageTick == null) return;
+        long now = killer.level().getGameTime();
+        long remaining = lastDamageTick + PassiveRegenConfig.DAMAGE_COOLDOWN_TICKS.get() - now;
+        if (remaining <= 0) return;
+        int reduction = Math.max(0, Math.min(100, PassiveRegenConfig.REGEN_ON_KILL_COOLDOWN_REDUCTION.get()));
+        long reduced = (long) (remaining * (reduction / 100.0D));
+        lastDamageTicks.put(killerId, lastDamageTick - reduced);
     }
+
+    @SubscribeEvent
+    public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        UUID playerId = event.getEntity().getUUID();
+        lastDamageTicks.remove(playerId);
+        activeBoosts.remove(playerId);
+    }
+
+    @SubscribeEvent
+    public void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        UUID playerId = event.getEntity().getUUID();
+        lastDamageTicks.remove(playerId);
+        activeBoosts.remove(playerId);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private static boolean shouldProcessPlayer(Player player) {
         return player.isAlive()
             && !player.isSpectator()
             && !player.getAbilities().invulnerable
             && player.getFoodData().getFoodLevel() >= PassiveRegenConfig.getMinimumFoodLevel()
-            && player.getHealth() < player.getMaxHealth();
+            && player.getHealth() < player.getMaxHealth() * (PassiveRegenConfig.MAX_REGEN_HEALTH_PERCENT.get() / 100.0f)
+            && !hasBlockedEffect(player, PassiveRegenConfig.BLOCKED_EFFECTS.get())
+            && !isDimensionBlacklisted(player, PassiveRegenConfig.DIMENSION_BLACKLIST.get())
+            && (PassiveRegenConfig.REGEN_WHILE_SPRINTING.get() || !player.isSprinting());
+    }
+
+    private static boolean hasBlockedEffect(net.minecraft.world.entity.player.Player player, java.util.List<? extends String> blockedEffects) {
+        if (blockedEffects == null || blockedEffects.isEmpty()) return false;
+        for (net.minecraft.world.effect.MobEffectInstance inst : player.getActiveEffects()) {
+            net.minecraft.resources.ResourceLocation id = net.minecraft.core.registries.BuiltInRegistries.MOB_EFFECT.getKey(inst.getEffect().value());
+            if (id != null && blockedEffects.contains(id.toString())) return true;
+        }
+        return false;
+    }
+
+    private static boolean isDimensionBlacklisted(net.minecraft.world.entity.player.Player player, java.util.List<? extends String> dimensionBlacklist) {
+        if (dimensionBlacklist == null || dimensionBlacklist.isEmpty()) return false;
+        String dimId = player.level().dimension().location().toString();
+        return dimensionBlacklist.contains(dimId);
+    }
+
+    private static final class RegenBoost {
+        final double multiplier;
+        final long expiresAt;
+
+        RegenBoost(double multiplier, long expiresAt) {
+            this.multiplier = multiplier;
+            this.expiresAt = expiresAt;
+        }
     }
 }

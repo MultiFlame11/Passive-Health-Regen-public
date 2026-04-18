@@ -5,18 +5,28 @@
   "name": "Passive Health Regen",
   "description": "Configurable passive out-of-combat regeneration without a potion effect.",
   "authors": [
-    "miche"
+    "MultiFlame"
   ],
   "license": "All Rights Reserved",
   "environment": "*",
   "entrypoints": {
     "main": [
       "io.github.miche.passiveregen.PassiveRegenMod"
+    ],
+    "client": [
+      "io.github.miche.passiveregen.client.PassiveRegenClientMod"
+    ],
+    "modmenu": [
+      "io.github.miche.passiveregen.client.PassiveRegenModMenuApi"
     ]
   },
   "depends": {
     "fabricloader": ">=0.18.4",
     "minecraft": "1.20.1",
-    "fabric-api": "*"
+    "fabric-api": "*",
+    "cloth-config": ">=11.1.106"
+  },
+  "suggests": {
+    "modmenu": "*"
   }
 }

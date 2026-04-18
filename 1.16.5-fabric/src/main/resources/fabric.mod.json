@@ -5,7 +5,7 @@
   "name": "Passive Health Regen",
   "description": "Configurable passive out-of-combat regeneration without a potion effect.",
   "authors": [
-    "miche"
+    "MultiFlame"
   ],
   "license": "All Rights Reserved",
   "environment": "*",
