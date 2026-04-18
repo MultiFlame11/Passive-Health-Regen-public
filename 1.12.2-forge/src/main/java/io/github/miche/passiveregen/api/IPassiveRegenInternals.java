@@ -9,4 +9,5 @@ import java.util.UUID;
 public interface IPassiveRegenInternals {
     void clearDamageCooldown(UUID playerUUID);
     void applyRegenBoost(UUID playerUUID, double multiplier, int durationTicks);
+    void reduceCooldown(UUID playerUUID, int percentReduction);
 }

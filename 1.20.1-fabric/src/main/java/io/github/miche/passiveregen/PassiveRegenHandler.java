@@ -11,6 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 public final class PassiveRegenHandler implements IPassiveRegenInternals {
     private final Map<UUID, Long> lastDamageTicks = new HashMap<>();
     private final Map<UUID, RegenBoost> activeBoosts = new HashMap<>();
+    private PassiveRegenConfig storedConfig;
     private final Map<UUID, HudSyncState> lastHudStates = new HashMap<>();
     static volatile long serverTick = 0;
 
@@ -36,6 +37,18 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
         if (existing == null || m >= existing.multiplier) {
             activeBoosts.put(playerUUID, new RegenBoost(m, expiresAt));
         }
+    }
+
+    @Override
+    public void reduceCooldown(UUID playerUUID, int percentReduction) {
+        if (storedConfig == null) return;
+        Long last = lastDamageTicks.get(playerUUID);
+        if (last == null) return;
+        long remaining = last + storedConfig.damageCooldownTicks - serverTick;
+        if (remaining <= 0) return;
+        int pct = Math.max(0, Math.min(100, percentReduction));
+        long cut = (long)(remaining * (pct / 100.0));
+        lastDamageTicks.put(playerUUID, last - cut);
     }
 
     // ── Lifecycle callbacks ───────────────────────────────────────────────────
@@ -66,6 +79,7 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
     }
 
     public void onServerTick(Iterable<ServerPlayer> players, PassiveRegenConfig config) {
+        this.storedConfig = config;
         for (ServerPlayer player : players) {
             long now = player.level().getGameTime();
             serverTick = now;

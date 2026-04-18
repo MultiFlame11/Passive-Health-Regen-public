@@ -66,4 +66,19 @@ public final class PassiveRegenAPI {
             internals.applyRegenBoost(playerUUID, multiplier, durationTicks);
         }
     }
+    /**
+     * Reduces the remaining damage cooldown by a percentage of what is left.
+     *
+     * <p>Example: if 8 seconds remain on a 10-second cooldown and percentReduction is 50,
+     * the remaining wait becomes 4 seconds. Has no effect once regen is already active.
+     * Values are clamped to 0-100.
+     *
+     * @param playerUUID      UUID of the server-side player to affect.
+     * @param percentReduction Percentage of remaining cooldown to cut (0-100).
+     */
+    public static void reduceCooldown(UUID playerUUID, int percentReduction) {
+        if (internals != null) {
+            internals.reduceCooldown(playerUUID, percentReduction);
+        }
+    }
 }

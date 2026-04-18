@@ -41,6 +41,17 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
         }
     }
 
+    @Override
+    public void reduceCooldown(UUID playerUUID, int percentReduction) {
+        Long last = lastDamageTicks.get(playerUUID);
+        if (last == null) return;
+        long remaining = last + PassiveRegenConfig.damageCooldownTicks - serverTick;
+        if (remaining <= 0) return;
+        int pct = Math.max(0, Math.min(100, percentReduction));
+        long cut = (long)(remaining * (pct / 100.0));
+        lastDamageTicks.put(playerUUID, last - cut);
+    }
+
     // ── Event handlers ────────────────────────────────────────────────────────
 
     @SubscribeEvent

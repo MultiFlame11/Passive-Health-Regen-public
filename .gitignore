@@ -17,3 +17,11 @@ src/generated/
 *.iml
 Thumbs.db
 Desktop.ini
+
+# Dev/art assets — not part of the mod source
+art/
+bandage-textures/
+bandage-preview-pack/
+BANDAGE-SPEC.md
+NOTES.md
+CONTRIBUTING.md
