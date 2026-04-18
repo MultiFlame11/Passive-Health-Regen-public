@@ -16,8 +16,12 @@ Made mostly because eating food just to top off HP gets old fast, especially wit
 - Blocks regen while specific potion effects are active
 - Disable regen entirely in certain dimensions
 - Separate longer cooldown for PvP damage
-- HUD overlay showing your regen cooldown and active healing state (1.20.1 Fabric only for now)
-- Server-side only, except on 1.20.1 Fabric where the HUD requires client install too
+- Optional hunger bonus system — eat well, heal faster and wait less
+- Optional regen-on-kill — killing an enemy shaves time off your regen cooldown
+- Optional toggle to disable vanilla natural regeneration
+- Toggle to allow or block regen while sprinting
+- HUD overlay showing your regen cooldown and active healing state (1.20.1 Fabric and 1.21.1 Fabric only)
+- Server-side only, except on 1.20.1 and 1.21.1 Fabric where the HUD requires client install too
 
 ---
 
@@ -70,6 +74,32 @@ Heals faster for players with larger health pools. Off by default.
 | `blockedEffects` | `[]` | List of effect IDs that pause regen while active. Example: `["minecraft:poison"]` |
 | `dimensionBlacklist` | `[]` | List of dimension IDs where regen is disabled. Example: `["minecraft:the_nether"]` |
 | `pvpDamageCooldownTicks` | `-1` | Separate cooldown after taking damage from another player. -1 = same as regular cooldown. |
+| `disableNaturalRegen` | `false` | Drains food exhaustion to suppress vanilla natural regeneration. Useful if you want this mod to be the only source of passive HP recovery. |
+| `regenWhileSprinting` | `true` | If false, regen is paused while the player is sprinting. |
+
+### Hunger bonus
+
+Gives bonus healing speed, heal amount, and shorter cooldown when hunger is above a threshold. Both tiers off by default.
+
+| Option | Default | Description |
+|---|---|---|
+| `hungerBonusEnabled` | `false` | Enables the threshold hunger bonus. |
+| `hungerBonusThresholdPercent` | `75` | Hunger level required to get the bonus. 75 = 15/20 bars. |
+| `hungerBonusHealMultiplier` | `1.5` | Multiplier applied to heal amount when above threshold. |
+| `hungerBonusSpeedMultiplier` | `1.5` | Multiplier applied to heal speed when above threshold. |
+| `hungerBonusCooldownReduction` | `25` | Percent reduction to the damage cooldown when above threshold. 25 = 5s wait becomes 3.75s. |
+| `hungerFullBonusEnabled` | `false` | Enables a second bonus tier that applies only at completely full hunger (20/20). Stacks on top of the threshold bonus. |
+| `hungerFullBonusHealMultiplier` | `2.0` | Heal amount multiplier at full hunger. |
+| `hungerFullBonusSpeedMultiplier` | `2.0` | Heal speed multiplier at full hunger. |
+
+### Regen on kill
+
+Killing an enemy reduces your remaining regen cooldown. Off by default.
+
+| Option | Default | Description |
+|---|---|---|
+| `regenOnKillEnabled` | `false` | Enables cooldown reduction on kill. |
+| `regenOnKillCooldownReduction` | `50` | Percent of remaining cooldown removed on kill. 50 = cuts remaining wait in half. |
 
 ---
 
@@ -80,6 +110,10 @@ Addon mods can interact with the regen system via the public API.
 ```java
 // Clears the damage cooldown so regen starts on the next tick
 PassiveRegenAPI.clearDamageCooldown(player.getUUID());
+
+// Reduces the remaining cooldown by a percentage of what is left
+// 50 = cuts remaining wait in half, 100 = same as clear
+PassiveRegenAPI.reduceCooldown(player.getUUID(), 50);
 
 // Applies a temporary regen speed multiplier
 // 1.5 = 50% faster, 2.0 = double speed
