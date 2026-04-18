@@ -111,6 +111,7 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
     public void onPlayerRespawn(ServerPlayer player) {
         UUID playerId = player.getUUID();
         lastDamageTicks.remove(playerId);
+        lastKnownHealth.remove(playerId);
         activeBoosts.remove(playerId);
     }
 
@@ -121,7 +122,8 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
         UUID killerId = killer.getUUID();
         Long lastDamageTick = lastDamageTicks.get(killerId);
         if (lastDamageTick == null) return;
-        long remaining = lastDamageTick + config.damageCooldownTicks - now;
+        int effectiveCooldown = config.getEffectiveDamageCooldown(killer.getFoodData().getFoodLevel());
+        long remaining = lastDamageTick + effectiveCooldown - now;
         if (remaining <= 0) return;
         int reduction = Math.max(0, Math.min(100, config.regenOnKillCooldownReduction));
         long reduced = (long) (remaining * (reduction / 100.0D));

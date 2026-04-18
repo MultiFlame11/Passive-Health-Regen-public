@@ -78,7 +78,8 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
         Long lastDamageTick = lastDamageTicks.get(killerId);
         if (lastDamageTick == null) return;
         long now = killer.world.getTotalWorldTime();
-        long remaining = lastDamageTick + PassiveRegenConfig.damageCooldownTicks - now;
+        int effectiveCooldown = PassiveRegenConfig.getEffectiveDamageCooldown(killer.getFoodStats().getFoodLevel());
+        long remaining = lastDamageTick + effectiveCooldown - now;
         if (remaining <= 0) return;
         int reduction = Math.max(0, Math.min(100, PassiveRegenConfig.regenOnKillCooldownReduction));
         long reduced = (long) (remaining * (reduction / 100.0D));
