@@ -13,7 +13,7 @@ import java.util.UUID;
 public final class PassiveRegenAPI {
 
     /**
-     * Internal hook — set by PassiveRegenHandler on construction.
+     * Internal hook  -- set by PassiveRegenHandler on construction.
      * Package-private so only classes in this package can write it.
      */
     private static IPassiveRegenInternals internals;
@@ -53,7 +53,7 @@ public final class PassiveRegenAPI {
      *
      * <p>If a boost is already active, the new one replaces it only when its
      * {@code multiplier} is greater than or equal to the active boost's multiplier
-     * (highest wins — boosts do <em>not</em> stack additively).
+     * (highest wins  -- boosts do <em>not</em> stack additively).
      * Applying the same multiplier refreshes the duration.
      *
      * @param playerUUID    UUID of the server-side player to affect.

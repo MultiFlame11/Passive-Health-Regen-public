@@ -4,7 +4,7 @@ import java.util.UUID;
 
 /**
  * Internal hook implemented by PassiveRegenHandler.
- * Not part of the public API — do not reference from addon mods.
+ * Not part of the public API  -- do not reference from addon mods.
  */
 public interface IPassiveRegenInternals {
     void clearDamageCooldown(UUID playerUUID);

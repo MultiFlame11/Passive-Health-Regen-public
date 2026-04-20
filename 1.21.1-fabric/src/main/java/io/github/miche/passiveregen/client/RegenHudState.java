@@ -58,6 +58,10 @@ public final class RegenHudState {
         return (float) Math.max(0.0D, Math.min(1.0D, extrapolatedTicks / damageCooldownTicks));
     }
 
+    public boolean isCooldownCounting() {
+        return damageCooldownTicks > 0 && getCooldownProgress() > 0.0F && !isReady();
+    }
+
     public float getSecondsRemaining() {
         float progress = getCooldownProgress();
         if (progress >= 1.0F) return 0.0F;

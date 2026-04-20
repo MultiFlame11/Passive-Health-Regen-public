@@ -73,7 +73,7 @@ Heals faster for players with larger health pools. Off by default.
 | `maxHealthScalingExponent` | `0.5` | Curve for the scaling. 0.5 = square root, gentle curve. 1.0 = linear. |
 | `maxHealthScalingCap` | `2.0` | Maximum multiplier from health scaling. |
 
-### Conditions
+### Conditions **[upcoming]**
 
 | Option | Default | Description |
 |---|---|---|
@@ -128,7 +128,7 @@ Controls how multiple active bonuses combine when more than one applies at once.
 |---|---|---|
 | `bonusStackingMode` | `MULTIPLICATIVE` | How bonuses combine. `MULTIPLICATIVE` = all multiply together. `ADDITIVE` = extras add up. `STRONGEST_ONLY` = only the highest bonus applies. |
 
-### Regen on kill
+### Regen on kill **[upcoming]**
 
 Killing an enemy reduces your remaining regen cooldown. Off by default.
 

@@ -22,7 +22,7 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
 
     @Override
     public void clearDamageCooldown(UUID playerUUID) {
-        // 0L = "last damaged at world tick zero" — cooldown is always expired by the time
+        // 0L = "last damaged at world tick zero"  -- cooldown is always expired by the time
         // a player can use an item, so regen starts on the very next handler tick.
         lastDamageTicks.put(playerUUID, 0L);
     }

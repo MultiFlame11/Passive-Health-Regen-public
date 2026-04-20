@@ -75,27 +75,30 @@ public final class RegenHudRenderer implements HudRenderCallback {
         String condition = config.showCondition == null ? "injured" : config.showCondition.trim().toLowerCase();
         return switch (condition) {
             case "always" -> true;
-            case "out_of_combat" -> state.getCurrentHealth() < state.getMaxHealth() || state.isRegenActive();
-            case "injured" -> state.getCurrentHealth() < state.getMaxHealth() || state.isRegenActive();
-            default -> true;
+            case "out_of_combat" -> state.isCooldownCounting() || state.isRegenActive() || state.getCurrentHealth() < state.getMaxHealth();
+            default -> state.getCurrentHealth() < state.getMaxHealth() || state.isRegenActive();
         };
     }
 
     private static void drawHeart(GuiGraphics guiGraphics, float progress, int tint) {
-        guiGraphics.blit(HEART_TEXTURE, 0, 0, 0, 0, 16, 16, TEX_W, TEX_H);
-
+        // Fill drawn first so outline renders on top of it.
+        // The outline row has a transparent interior, so the fill shows through
+        // while the dark border pixels sit on top  -- giving a natural black border over the fill.
         int fillHeight = Mth.ceil(16.0F * Mth.clamp(progress, 0.0F, 1.0F));
         if (fillHeight > 0) {
-            int argb = tint;
-            float a = ((argb >>> 24) & 0xFF) / 255.0F;
-            float r = ((argb >>> 16) & 0xFF) / 255.0F;
-            float g = ((argb >>> 8) & 0xFF) / 255.0F;
-            float b = (argb & 0xFF) / 255.0F;
+            float a = ((tint >>> 24) & 0xFF) / 255.0F;
+            float r = ((tint >>> 16) & 0xFF) / 255.0F;
+            float g = ((tint >>> 8) & 0xFF) / 255.0F;
+            float b = (tint & 0xFF) / 255.0F;
             RenderSystem.setShaderColor(r, g, b, a);
             int drawY = 16 - fillHeight;
             guiGraphics.blit(HEART_TEXTURE, 0, drawY, 0, 32 - fillHeight, 16, fillHeight, TEX_W, TEX_H);
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         }
+        // Outline drawn last  -- border appears over the fill.
+        // Reset color first to guard against stale vanilla shader state (white flash bug fix).
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        guiGraphics.blit(HEART_TEXTURE, 0, 0, 0, 0, 16, 16, TEX_W, TEX_H);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     private static void drawGlow(GuiGraphics guiGraphics, float alpha) {
