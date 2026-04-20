@@ -25,3 +25,20 @@ bandage-preview-pack/
 BANDAGE-SPEC.md
 NOTES.md
 CONTRIBUTING.md
+
+# Internal planning and porting docs
+FEATURE-BACKLOG.md
+PORTING.md
+FOR-REIMU.md
+HUD-REIMU.md
+HUD-SPEC.md
+
+# Pre-built upload folders
+upload-*/
+
+# Release/build helper scripts
+build_all_*.ps1
+bump_build_gradle.ps1
+copy_jars*.ps1
+install_preview.ps1
+gen_bandage_textures.py

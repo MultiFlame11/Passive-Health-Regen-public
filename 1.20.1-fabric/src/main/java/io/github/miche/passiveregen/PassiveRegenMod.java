@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 
 public final class PassiveRegenMod implements ModInitializer {
     public static final String MODID = "passiveregen";
@@ -19,21 +20,23 @@ public final class PassiveRegenMod implements ModInitializer {
     @Override
     public void onInitialize() {
         config = PassiveRegenConfig.load();
+        handler.setConfig(config);
 
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
             if (config.enabled && entity instanceof ServerPlayer player && amount > 0.0F) {
-                handler.onPlayerDamaged(player, source, config);
+                handler.onPlayerDamaged(player, source, amount, config);
             }
             return true;
         });
 
         ServerEntityCombatEvents.AFTER_KILLED_OTHER_ENTITY.register((world, killer, killedEntity) -> {
             if (killer instanceof ServerPlayer player) {
-                handler.onEntityKilled(player, config);
+                handler.onEntityKilled(player, killedEntity, config);
             }
         });
 
-        ServerTickEvents.END_SERVER_TICK.register(server -> handler.onServerTick(server.getPlayerList().getPlayers(), config));
+        ServerTickEvents.END_SERVER_TICK.register(server -> handler.onServerTick(server, server.getPlayerList().getPlayers(), config));
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> this.handler.onPlayerLogin(handler.player));
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> this.handler.onPlayerDisconnect(handler.player));
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> handler.onPlayerRespawn(newPlayer));
     }

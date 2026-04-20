@@ -1,5 +1,6 @@
 package io.github.miche.passiveregen;
 
+import java.util.List;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
@@ -8,269 +9,625 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 @Config(modid = PassiveRegenMod.MODID)
 public class PassiveRegenConfig {
-    @Config.Comment("Set to false to completely disable passive regeneration.")
-    public static boolean enabled = true;
+    public static class General {
+        @Config.Comment("Set to false to completely disable passive regeneration.")
+        public boolean enabled = true;
 
-    @Config.Comment({
-        "If true, regen starts slow and speeds up the longer you stay out of combat.",
-        "At rampFullStrengthTicks out-of-combat ticks you reach peak regen speed.",
-        "If false, regen always runs at the baseHealIntervalTicks rate."
-    })
-    public static boolean rampUpEnabled = false;
+        @Config.Comment({
+            "How many ticks after taking damage before passive regen can start.",
+            "20 ticks = 1 second. Default 100 = 5 seconds.",
+            "Examples: 40 = 2s, 100 = 5s (default), 200 = 10s, 600 = 30s"
+        })
+        @Config.RangeInt(min = 0, max = 12000)
+        public int damageCooldownTicks = 100;
 
-    @Config.Comment({
-        "How many ticks after taking damage before passive regen can start.",
-        "20 ticks = 1 second. Default 100 = 5 seconds.",
-        "Examples: 40 = 2s,  100 = 5s (default),  200 = 10s,  600 = 30s"
-    })
-    @Config.RangeInt(min = 0, max = 12000)
-    public static int damageCooldownTicks = 100;
+        @Config.Comment({
+            "Minimum hunger bar % required before passive regen can occur.",
+            "0 = regen works even on an empty hunger bar.",
+            "50 = at least half hunger required (default).",
+            "100 = hunger bar must be completely full."
+        })
+        @Config.RangeInt(min = 0, max = 100)
+        public int minimumHungerPercent = 50;
 
-    @Config.Comment({
-        "Minimum hunger bar % required before passive regen can occur.",
-        "0 = regen works even on an empty hunger bar.",
-        "50 = at least half hunger required (default).",
-        "100 = hunger bar must be completely full.",
-        "Examples: 0 (any hunger), 25 (quarter+), 50 (half+, default), 75 (three-quarter+), 100 (full only)"
-    })
-    @Config.RangeInt(min = 0, max = 100)
-    public static int minimumHungerPercent = 50;
+        @Config.Comment({
+            "Minimum saturation level required before passive regen can occur.",
+            "0.0 = disabled (saturation is not checked).",
+            "Saturation depletes before hunger. Max vanilla saturation is ~20.0."
+        })
+        @Config.RangeDouble(min = 0.0D, max = 20.0D)
+        public double minimumSaturationLevel = 0.0D;
 
-    @Config.Comment({
-        "How often (in ticks) players are checked for passive regen.",
-        "20 ticks = 1 second. Lower = more precise; higher = cheaper.",
-        "Default 20 (every second). Rarely needs changing.",
-        "Examples: 10 = 0.5s, 20 = 1s (default), 40 = 2s"
-    })
-    @Config.RangeInt(min = 1, max = 200)
-    public static int updateIntervalTicks = 20;
+        @Config.Comment({
+            "How often (in ticks) players are checked for passive regen.",
+            "20 ticks = 1 second. Default 20 = every second."
+        })
+        @Config.RangeInt(min = 1, max = 200)
+        public int updateIntervalTicks = 20;
 
-    @Config.Comment({
-        "Ticks between each heal trigger at the base (starting) regen speed.",
-        "Lower = faster regen. Vanilla Regeneration I is approximately 50 ticks.",
-        "20 ticks = 1 second. Default 100 = heal once every 5 seconds.",
-        "Examples: 20 = 1s (fast), 50 = 2.5s (vanilla regen I), 100 = 5s (default), 200 = 10s (slow)"
-    })
-    @Config.RangeInt(min = 1, max = 12000)
-    public static int baseHealIntervalTicks = 100;
+        @Config.Comment({
+            "Ticks between each heal trigger at the base regen speed.",
+            "20 ticks = 1 second. Default 100 = heal once every 5 seconds."
+        })
+        @Config.RangeInt(min = 1, max = 12000)
+        public int baseHealIntervalTicks = 100;
 
-    @Config.Comment({
-        "Ticks between each heal trigger at peak ramp-up speed (only used if rampUpEnabled = true).",
-        "This is the FASTEST the regen will ever go, reached after rampFullStrengthTicks out-of-combat.",
-        "Must be less than baseHealIntervalTicks for ramp-up to have any effect.",
-        "Default 50 = heal once every 2.5 seconds at peak.",
-        "Examples: 20 = 1s (very fast), 50 = 2.5s (default), 75 = 3.75s"
-    })
-    @Config.RangeInt(min = 1, max = 12000)
-    public static int fullStrengthHealIntervalTicks = 50;
+        @Config.Comment({
+            "If true, regen starts slow and speeds up the longer you stay out of combat.",
+            "If false, regen always uses baseHealIntervalTicks."
+        })
+        public boolean rampUpEnabled = false;
 
-    @Config.Comment({
-        "Total out-of-combat ticks to reach peak regen speed (only used if rampUpEnabled = true).",
-        "20 ticks = 1 second. Default 600 = 30 seconds out of combat to reach full speed.",
-        "Examples: 200 = 10s, 400 = 20s, 600 = 30s (default), 1200 = 1 minute"
-    })
-    @Config.RangeInt(min = 1, max = 12000)
-    public static int rampFullStrengthTicks = 600;
+        @Config.Comment({
+            "Ticks between each heal trigger at peak ramp-up speed.",
+            "Only used if rampUpEnabled = true. Default 50 = once every 2.5 seconds."
+        })
+        @Config.RangeInt(min = 1, max = 12000)
+        public int fullStrengthHealIntervalTicks = 50;
 
-    @Config.Comment({
-        "How much health to restore each time regen triggers.",
-        "0.5 = quarter heart (default),  1.0 = half heart,  2.0 = full heart.",
-        "This is before any max-health scaling."
-    })
-    @Config.RangeDouble(min = 0.01D, max = 100.0D)
-    public static double healAmountPerTrigger = 0.5D;
+        @Config.Comment({
+            "Total out-of-combat ticks required to reach peak ramp-up speed.",
+            "20 ticks = 1 second. Default 600 = 30 seconds."
+        })
+        @Config.RangeInt(min = 1, max = 12000)
+        public int rampFullStrengthTicks = 600;
 
-    @Config.Comment({
-        "If true, regen heals slightly more for players with more than 20 max HP.",
-        "Uses a soft curve (controlled by maxHealthScalingExponent) so it does not become extreme.",
-        "Useful for modpacks with high-HP bosses or modded players with extra hearts."
-    })
-    public static boolean scaleWithMaxHealth = false;
+        @Config.Comment({
+            "How much health to restore each time regen triggers.",
+            "0.5 = quarter heart (default), 1.0 = half heart, 2.0 = full heart."
+        })
+        @Config.RangeDouble(min = 0.01D, max = 100.0D)
+        public double healAmountPerTrigger = 0.5D;
+    }
 
-    @Config.Comment({
-        "Controls how steeply regen scales with max HP when scaleWithMaxHealth = true.",
-        "0.5 = square-root scaling (gentle, default).  1.0 = linear.  2.0 = quadratic (steep).",
-        "Lower values keep scaling gentle even at very high HP pools.",
-        "Example at 40 max HP (2x base): exponent 0.5 gives ~1.41x heal, 1.0 gives 2.0x heal."
-    })
-    @Config.RangeDouble(min = 0.1D, max = 4.0D)
-    public static double maxHealthScalingExponent = 0.5D;
+    public static class Limits {
+        @Config.Comment({
+            "If true, regen heals slightly more for players with more than 20 max HP."
+        })
+        public boolean scaleWithMaxHealth = false;
 
-    @Config.Comment({
-        "Maximum heal multiplier from max-health scaling (when scaleWithMaxHealth = true).",
-        "Default 2.0 means scaling can at most double the base heal amount, no matter how high HP gets.",
-        "Examples: 1.5 = 50% more at most, 2.0 = double at most (default), 3.0 = triple at most"
-    })
-    @Config.RangeDouble(min = 1.0D, max = 100.0D)
-    public static double maxHealthScalingCap = 2.0D;
+        @Config.Comment({
+            "Controls how steeply regen scales with max HP when scaleWithMaxHealth = true.",
+            "0.5 = square-root scaling (default)."
+        })
+        @Config.RangeDouble(min = 0.1D, max = 4.0D)
+        public double maxHealthScalingExponent = 0.5D;
 
-    @Config.Comment({
-        "Regen stops when health reaches this percentage of max health.",
-        "100 = regen all the way to full (default). 80 = stops at 80% health.",
-        "Examples: 60 = stops at 60%, 80 = stops at 80%, 100 = full regen (default)"
-    })
-    @Config.RangeInt(min = 0, max = 100)
-    public static int maxRegenHealthPercent = 100;
+        @Config.Comment({
+            "Maximum heal multiplier from max-health scaling."
+        })
+        @Config.RangeDouble(min = 1.0D, max = 100.0D)
+        public double maxHealthScalingCap = 2.0D;
 
-    @Config.Comment({
-        "List of potion/mob effect IDs that prevent passive regen while the player has them active.",
-        "Empty list = no effects block regen (default).",
-        "Use namespaced IDs like minecraft:poison, minecraft:wither.",
-        "Examples: [] = nothing blocks, [\"minecraft:poison\"] = paused while poisoned"
-    })
-    public static String[] blockedEffects = new String[0];
+        @Config.Comment({
+            "Regen stops when health reaches this percentage of max health.",
+            "100 = full regen (default)."
+        })
+        @Config.RangeInt(min = 0, max = 100)
+        public int maxRegenHealthPercent = 100;
 
-    @Config.Comment({
-        "List of dimension IDs where passive regen is disabled entirely.",
-        "For 1.12.2, use the dimension integer as a string: \"-1\" = Nether, \"0\" = Overworld, \"1\" = End.",
-        "Empty list = regen works in all dimensions (default).",
-        "Examples: [] = all dimensions, [\"-1\"] = disabled in Nether"
-    })
-    public static String[] dimensionBlacklist = new String[0];
+        @Config.Comment({
+            "List of potion/mob effect IDs that prevent passive regen while active.",
+            "Use namespaced IDs like minecraft:poison."
+        })
+        public String[] blockedEffects = new String[0];
 
-    @Config.Comment({
-        "Separate damage cooldown (ticks) when a player hits you instead of a mob. -1 = same as damageCooldownTicks (default).",
-        "20 ticks = 1 second. Set higher to delay regen longer after PvP hits.",
-        "Examples: -1 = same as regular (default), 200 = 10s, 400 = 20s, 600 = 30s"
-    })
-    @Config.RangeInt(min = -1, max = 12000)
-    public static int pvpDamageCooldownTicks = -1;
+        @Config.Comment({
+            "List of dimension IDs where passive regen is disabled entirely.",
+            "For 1.12.2 use dimension integers as strings, e.g. -1 Nether, 0 Overworld, 1 End."
+        })
+        public String[] dimensionBlacklist = new String[0];
 
-    // ── Hunger Bonus ──────────────────────────────────────────────────────────
+        @Config.Comment({
+            "Separate damage cooldown when a player hits you. -1 = use normal cooldown."
+        })
+        @Config.RangeInt(min = -1, max = 12000)
+        public int pvpDamageCooldownTicks = -1;
 
-    @Config.Comment("Master toggle for the hunger bonus system. When enabled, high hunger boosts regen.")
-    public static boolean hungerBonusEnabled = false;
+        @Config.Comment("If true, vanilla natural regeneration is disabled.")
+        public boolean disableNaturalRegen = false;
 
-    @Config.Comment({
-        "Hunger % threshold to trigger the hunger bonus (0-100). Default 75.",
-        "Example: 75 = bonus kicks in when hunger bar is at least 75% full."
-    })
-    @Config.RangeInt(min = 0, max = 100)
-    public static int hungerBonusThresholdPercent = 75;
+        @Config.Comment("If false, passive regen is paused while sprinting.")
+        public boolean regenWhileSprinting = true;
+    }
 
-    @Config.Comment({
-        "Heal amount multiplier applied when hunger exceeds hungerBonusThresholdPercent.",
-        "Default 1.5 = 50% more healing."
-    })
-    @Config.RangeDouble(min = 1.0D, max = 100.0D)
-    public static double hungerBonusHealMultiplier = 1.5D;
+    public static class HungerBonus {
+        @Config.Comment("Master toggle for the hunger bonus system.")
+        public boolean hungerBonusEnabled = false;
 
-    @Config.Comment({
-        "Heal speed multiplier (reduces effective heal interval) when hunger exceeds threshold.",
-        "Default 1.5 = regen ticks 50% faster."
-    })
-    @Config.RangeDouble(min = 1.0D, max = 100.0D)
-    public static double hungerBonusSpeedMultiplier = 1.5D;
+        @Config.Comment("Hunger percent threshold to trigger the hunger bonus.")
+        @Config.RangeInt(min = 0, max = 100)
+        public int hungerBonusThresholdPercent = 75;
 
-    @Config.Comment({
-        "Percentage to reduce the damage cooldown by when hunger exceeds threshold (0-100).",
-        "Default 25 = cooldown is 25% shorter. 0 = no cooldown reduction."
-    })
-    @Config.RangeInt(min = 0, max = 100)
-    public static int hungerBonusCooldownReduction = 25;
+        @Config.Comment("Heal amount multiplier when hunger exceeds the threshold.")
+        @Config.RangeDouble(min = 1.0D, max = 100.0D)
+        public double hungerBonusHealMultiplier = 1.5D;
 
-    @Config.Comment("Second-tier bonus at 100% hunger (full bar). Off by default.")
-    public static boolean hungerFullBonusEnabled = false;
+        @Config.Comment("Heal speed multiplier when hunger exceeds the threshold.")
+        @Config.RangeDouble(min = 1.0D, max = 100.0D)
+        public double hungerBonusSpeedMultiplier = 1.5D;
 
-    @Config.Comment({
-        "Heal amount multiplier at full hunger (overrides hungerBonusHealMultiplier when hunger = 20/20).",
-        "Default 2.0 = double healing at full hunger."
-    })
-    @Config.RangeDouble(min = 1.0D, max = 100.0D)
-    public static double hungerFullBonusHealMultiplier = 2.0D;
+        @Config.Comment("Cooldown reduction percent when hunger exceeds the threshold.")
+        @Config.RangeInt(min = 0, max = 100)
+        public int hungerBonusCooldownReduction = 25;
 
-    @Config.Comment({
-        "Heal speed multiplier at full hunger (overrides hungerBonusSpeedMultiplier when hunger = 20/20).",
-        "Default 2.0 = regen ticks twice as fast at full hunger."
-    })
-    @Config.RangeDouble(min = 1.0D, max = 100.0D)
-    public static double hungerFullBonusSpeedMultiplier = 2.0D;
+        @Config.Comment({
+            "If true, regen still fires below minimumHungerPercent/minimumSaturationLevel",
+            "but at a reduced rate instead of being fully blocked.",
+            "The HUD still shows orange to indicate the penalized state."
+        })
+        public boolean hungerPenaltyEnabled = false;
 
-    // ── Regen on Kill ─────────────────────────────────────────────────────────
+        @Config.Comment({
+            "Speed multiplier applied when hunger/saturation is below minimum threshold.",
+            "Only used when hungerPenaltyEnabled = true.",
+            "0.25 = 4x slower (default). 1.0 = same speed as normal (effectively disables the penalty)."
+        })
+        @Config.RangeDouble(min = 0.01D, max = 1.0D)
+        public double hungerPenaltySpeedMultiplier = 0.25D;
 
-    @Config.Comment("If true, killing an entity reduces the player's damage cooldown.")
-    public static boolean regenOnKillEnabled = false;
+        @Config.Comment({
+            "Heal amount multiplier when hunger/saturation is below minimum threshold.",
+            "Only used when hungerPenaltyEnabled = true.",
+            "1.0 = same amount (default), 0.5 = half heals."
+        })
+        @Config.RangeDouble(min = 0.01D, max = 1.0D)
+        public double hungerPenaltyHealMultiplier = 1.0D;
 
-    @Config.Comment({
-        "Percentage of the remaining damage cooldown to remove on kill (0-100).",
-        "100 = fully clears the cooldown (regen starts immediately after a kill).",
-        "Default 50 = halves the remaining cooldown."
-    })
-    @Config.RangeInt(min = 0, max = 100)
-    public static int regenOnKillCooldownReduction = 50;
+        @Config.Comment("Second-tier bonus at full hunger.")
+        public boolean hungerFullBonusEnabled = false;
 
-    // ── Natural Regen ─────────────────────────────────────────────────────────
+        @Config.Comment("Heal amount multiplier at full hunger.")
+        @Config.RangeDouble(min = 1.0D, max = 100.0D)
+        public double hungerFullBonusHealMultiplier = 2.0D;
 
-    @Config.Comment("If true, vanilla natural regeneration is disabled.")
-    public static boolean disableNaturalRegen = false;
+        @Config.Comment("Heal speed multiplier at full hunger.")
+        @Config.RangeDouble(min = 1.0D, max = 100.0D)
+        public double hungerFullBonusSpeedMultiplier = 2.0D;
 
-    // ── Sprinting ─────────────────────────────────────────────────────────────
+        @Config.Comment("Master toggle for the saturation bonus system.")
+        public boolean saturationBonusEnabled = false;
 
-    @Config.Comment("If false, passive regen is paused while the player is sprinting.")
-    public static boolean regenWhileSprinting = true;
+        @Config.Comment("Minimum saturation needed to trigger the saturation bonus.")
+        @Config.RangeDouble(min = 0.0D, max = 20.0D)
+        public double saturationBonusThreshold = 10.0D;
+
+        @Config.Comment("Heal speed multiplier when saturation meets the bonus threshold.")
+        @Config.RangeDouble(min = 1.0D, max = 10.0D)
+        public double saturationBonusSpeedMultiplier = 1.25D;
+
+        @Config.Comment("Heal amount multiplier when saturation meets the bonus threshold.")
+        @Config.RangeDouble(min = 1.0D, max = 10.0D)
+        public double saturationBonusHealMultiplier = 1.25D;
+    }
+
+    public static class RegenOnKill {
+        @Config.Comment("If true, killing an entity reduces the player's damage cooldown.")
+        public boolean regenOnKillEnabled = false;
+
+        @Config.Comment("Percent of remaining cooldown removed on kill.")
+        @Config.RangeInt(min = 0, max = 100)
+        public int regenOnKillCooldownReduction = 50;
+
+        @Config.Comment("If true, only hostile mob kills grant the cooldown reduction.")
+        public boolean regenOnKillHostileOnly = false;
+
+        @Config.Comment("Entity IDs that never grant kill-based cooldown reduction.")
+        public String[] regenOnKillBlacklist = new String[0];
+
+        @Config.Comment("If true, repeated kills within the combo window stack extra reduction.")
+        public boolean regenOnKillComboEnabled = false;
+
+        @Config.Comment("How long the kill combo window lasts, in ticks.")
+        @Config.RangeInt(min = 20, max = 1200)
+        public int regenOnKillComboWindowTicks = 200;
+
+        @Config.Comment("Maximum combo stacks before extra reduction caps out.")
+        @Config.RangeInt(min = 1, max = 20)
+        public int regenOnKillComboMaxStacks = 5;
+
+        @Config.Comment("Additional cooldown reduction percent per combo stack.")
+        @Config.RangeInt(min = 0, max = 100)
+        public int regenOnKillComboReductionPerStack = 10;
+    }
+
+    public static class Bonuses {
+        @Config.Comment({
+            "Controls how multiple active bonus multipliers combine.",
+            "MULTIPLICATIVE, ADDITIVE, or STRONGEST_ONLY."
+        })
+        public BonusStackingMode bonusStackingMode = BonusStackingMode.MULTIPLICATIVE;
+
+        @Config.Comment("Master toggle for the sneaking/crouching regen bonus.")
+        public boolean crouchBonusEnabled = false;
+
+        @Config.Comment("Heal speed multiplier while sneaking.")
+        @Config.RangeDouble(min = 1.0D, max = 10.0D)
+        public double crouchSpeedMultiplier = 1.5D;
+
+        @Config.Comment("Heal amount multiplier while sneaking.")
+        @Config.RangeDouble(min = 1.0D, max = 10.0D)
+        public double crouchHealMultiplier = 1.0D;
+
+        @Config.Comment("Master toggle for light-level-based regen scaling.")
+        public boolean lightLevelBonusEnabled = false;
+
+        @Config.Comment("Multiplier applied at block light level 0.")
+        @Config.RangeDouble(min = 0.1D, max = 2.0D)
+        public double lightLevelMinMultiplier = 0.75D;
+
+        @Config.Comment("Multiplier applied at block light level 15.")
+        @Config.RangeDouble(min = 0.1D, max = 2.0D)
+        public double lightLevelMaxMultiplier = 1.25D;
+
+        @Config.Comment("Master toggle for day/night regen scaling.")
+        public boolean dayNightMultiplierEnabled = false;
+
+        @Config.Comment("Multiplier applied during the day.")
+        @Config.RangeDouble(min = 0.1D, max = 3.0D)
+        public double dayMultiplier = 1.25D;
+
+        @Config.Comment("Multiplier applied during the night.")
+        @Config.RangeDouble(min = 0.1D, max = 3.0D)
+        public double nightMultiplier = 0.75D;
+
+        @Config.Comment("Master toggle for difficulty-based regen scaling.")
+        public boolean difficultyScalingEnabled = false;
+
+        @Config.Comment("Multiplier applied on Peaceful difficulty.")
+        @Config.RangeDouble(min = 0.1D, max = 5.0D)
+        public double peacefulMultiplier = 2.0D;
+
+        @Config.Comment("Multiplier applied on Easy difficulty.")
+        @Config.RangeDouble(min = 0.1D, max = 5.0D)
+        public double easyMultiplier = 1.25D;
+
+        @Config.Comment("Multiplier applied on Normal difficulty.")
+        @Config.RangeDouble(min = 0.1D, max = 5.0D)
+        public double normalMultiplier = 1.0D;
+
+        @Config.Comment("Multiplier applied on Hard difficulty.")
+        @Config.RangeDouble(min = 0.1D, max = 5.0D)
+        public double hardMultiplier = 0.75D;
+    }
+
+    public static class LargeDamagePenalty {
+        @Config.Comment("If true, very large hits apply a longer cooldown than normal.")
+        public boolean largeDamagePenaltyEnabled = false;
+
+        @Config.Comment("Percent of max health a hit must deal to count as large damage.")
+        @Config.RangeInt(min = 1, max = 100)
+        public int largeDamageThresholdPercent = 50;
+
+        @Config.Comment("Cooldown multiplier applied for large hits.")
+        @Config.RangeDouble(min = 1.0D, max = 5.0D)
+        public double largeDamageCooldownMultiplier = 1.5D;
+    }
+
+    public static class Hud {
+        @Config.Comment("Master toggle for the passive regen HUD widget.")
+        public boolean showRegenHud = true;
+
+        @Config.Comment("If true, shows the remaining cooldown in seconds next to the heart.")
+        public boolean showTimer = true;
+
+        @Config.Comment({
+            "Global opacity multiplier for the entire HUD (0.0 = invisible, 1.0 = fully opaque)."
+        })
+        @Config.RangeDouble(min = 0.0D, max = 1.0D)
+        public double hudOpacity = 1.0D;
+
+        @Config.Comment({
+            "Heart fill color as a hex RGB string. Default FF69B4 (pink)."
+        })
+        public String hudColor = "FF69B4";
+
+        @Config.Comment({
+            "Heart color when hunger is too low to regen. Default FF9F1A (orange)."
+        })
+        public String hudBlockedColor = "FF9F1A";
+
+        @Config.Comment("HUD scale. 1.0 = normal size.")
+        @Config.RangeDouble(min = 0.5D, max = 4.0D)
+        public double hudScale = 1.0D;
+
+        @Config.Comment("HUD position preset.")
+        public HudPosition hudPosition = HudPosition.LEFT_OF_HEALTH;
+
+        @Config.Comment("Extra horizontal offset after the preset anchor is applied.")
+        @Config.RangeInt(min = -2000, max = 2000)
+        public int hudOffsetX = 0;
+
+        @Config.Comment("Extra vertical offset after the preset anchor is applied.")
+        @Config.RangeInt(min = -2000, max = 2000)
+        public int hudOffsetY = 0;
+
+        @Config.Comment("Anchor used only when hudPosition = CUSTOM.")
+        public HudAnchor hudCustomAnchor = HudAnchor.TOP_LEFT;
+
+        @Config.Comment("When the HUD should appear.")
+        public HudShowCondition showCondition = HudShowCondition.injured;
+
+        @Config.Comment("If true, hide the HUD when you are already full health and regen is ready.")
+        public boolean hideAtFullHealth = true;
+
+        @Config.Comment("If true, the HUD fades in and out instead of appearing instantly.")
+        public boolean hudFadeEnabled = true;
+
+        @Config.Comment("How long the HUD takes to fade in, in milliseconds.")
+        @Config.RangeInt(min = 0, max = 3000)
+        public int hudFadeInMs = 500;
+
+        @Config.Comment("How long the HUD takes to fade out, in milliseconds.")
+        @Config.RangeInt(min = 0, max = 3000)
+        public int hudFadeOutMs = 400;
+
+        @Config.Comment({
+            "If true, adds a heartbeat thump on each heal tick and an organic multi-sine glow pulse.",
+            "Set to false for a simpler, flat animation (smooth sine glow, no scale effect).",
+            "Useful for players sensitive to motion or who prefer a cleaner look."
+        })
+        public boolean hudRichAnimations = true;
+
+        @Config.Comment("Optional heal feedback particles. Format: modid:particle;count;spread")
+        public String[] particles = new String[0];
+
+        @Config.Comment("Optional heal feedback sounds. Format: modid:sound;volume;pitch")
+        public String[] sounds = new String[0];
+    }
+
+    public enum HudPosition {
+        RIGHT_OF_HEALTH,
+        LEFT_OF_HEALTH,
+        ABOVE_HUNGER,
+        BELOW_HUNGER,
+        TOP_LEFT,
+        TOP_RIGHT,
+        BOTTOM_LEFT,
+        BOTTOM_RIGHT,
+        CUSTOM
+    }
+
+    public enum HudAnchor {
+        CENTER,
+        TOP,
+        BOTTOM,
+        LEFT,
+        RIGHT,
+        TOP_LEFT,
+        TOP_RIGHT,
+        BOTTOM_LEFT,
+        BOTTOM_RIGHT
+    }
+
+    public enum HudShowCondition {
+        injured,
+        out_of_combat,
+        always
+    }
+
+    public enum BonusStackingMode {
+        MULTIPLICATIVE,
+        ADDITIVE,
+        STRONGEST_ONLY
+    }
+
+    public static General general = new General();
+    public static Limits limits = new Limits();
+    public static HungerBonus hungerBonus = new HungerBonus();
+    public static RegenOnKill regenOnKill = new RegenOnKill();
+    public static Bonuses bonuses = new Bonuses();
+    public static LargeDamagePenalty largeDamagePenalty = new LargeDamagePenalty();
+    public static Hud hud = new Hud();
+
+    @Config.Ignore public static boolean enabled = true;
+    @Config.Ignore public static boolean rampUpEnabled = false;
+    @Config.Ignore public static int damageCooldownTicks = 100;
+    @Config.Ignore public static int minimumHungerPercent = 50;
+    @Config.Ignore public static double minimumSaturationLevel = 0.0D;
+    @Config.Ignore public static int updateIntervalTicks = 20;
+    @Config.Ignore public static int baseHealIntervalTicks = 100;
+    @Config.Ignore public static int fullStrengthHealIntervalTicks = 50;
+    @Config.Ignore public static int rampFullStrengthTicks = 600;
+    @Config.Ignore public static double healAmountPerTrigger = 0.5D;
+    @Config.Ignore public static boolean scaleWithMaxHealth = false;
+    @Config.Ignore public static double maxHealthScalingExponent = 0.5D;
+    @Config.Ignore public static double maxHealthScalingCap = 2.0D;
+    @Config.Ignore public static int maxRegenHealthPercent = 100;
+    @Config.Ignore public static String[] blockedEffects = new String[0];
+    @Config.Ignore public static String[] dimensionBlacklist = new String[0];
+    @Config.Ignore public static int pvpDamageCooldownTicks = -1;
+    @Config.Ignore public static boolean disableNaturalRegen = false;
+    @Config.Ignore public static boolean regenWhileSprinting = true;
+    @Config.Ignore public static boolean hungerBonusEnabled = false;
+    @Config.Ignore public static boolean hungerPenaltyEnabled = false;
+    @Config.Ignore public static double hungerPenaltySpeedMultiplier = 0.25D;
+    @Config.Ignore public static double hungerPenaltyHealMultiplier = 1.0D;
+    @Config.Ignore public static int hungerBonusThresholdPercent = 75;
+    @Config.Ignore public static double hungerBonusHealMultiplier = 1.5D;
+    @Config.Ignore public static double hungerBonusSpeedMultiplier = 1.5D;
+    @Config.Ignore public static int hungerBonusCooldownReduction = 25;
+    @Config.Ignore public static boolean hungerFullBonusEnabled = false;
+    @Config.Ignore public static double hungerFullBonusHealMultiplier = 2.0D;
+    @Config.Ignore public static double hungerFullBonusSpeedMultiplier = 2.0D;
+    @Config.Ignore public static boolean saturationBonusEnabled = false;
+    @Config.Ignore public static double saturationBonusThreshold = 10.0D;
+    @Config.Ignore public static double saturationBonusSpeedMultiplier = 1.25D;
+    @Config.Ignore public static double saturationBonusHealMultiplier = 1.25D;
+    @Config.Ignore public static boolean regenOnKillEnabled = false;
+    @Config.Ignore public static int regenOnKillCooldownReduction = 50;
+    @Config.Ignore public static boolean regenOnKillHostileOnly = false;
+    @Config.Ignore public static String[] regenOnKillBlacklist = new String[0];
+    @Config.Ignore public static boolean regenOnKillComboEnabled = false;
+    @Config.Ignore public static int regenOnKillComboWindowTicks = 200;
+    @Config.Ignore public static int regenOnKillComboMaxStacks = 5;
+    @Config.Ignore public static int regenOnKillComboReductionPerStack = 10;
+    @Config.Ignore public static BonusStackingMode bonusStackingMode = BonusStackingMode.MULTIPLICATIVE;
+    @Config.Ignore public static boolean crouchBonusEnabled = false;
+    @Config.Ignore public static double crouchSpeedMultiplier = 1.5D;
+    @Config.Ignore public static double crouchHealMultiplier = 1.0D;
+    @Config.Ignore public static boolean lightLevelBonusEnabled = false;
+    @Config.Ignore public static double lightLevelMinMultiplier = 0.75D;
+    @Config.Ignore public static double lightLevelMaxMultiplier = 1.25D;
+    @Config.Ignore public static boolean dayNightMultiplierEnabled = false;
+    @Config.Ignore public static double dayMultiplier = 1.25D;
+    @Config.Ignore public static double nightMultiplier = 0.75D;
+    @Config.Ignore public static boolean difficultyScalingEnabled = false;
+    @Config.Ignore public static double peacefulMultiplier = 2.0D;
+    @Config.Ignore public static double easyMultiplier = 1.25D;
+    @Config.Ignore public static double normalMultiplier = 1.0D;
+    @Config.Ignore public static double hardMultiplier = 0.75D;
+    @Config.Ignore public static boolean largeDamagePenaltyEnabled = false;
+    @Config.Ignore public static int largeDamageThresholdPercent = 50;
+    @Config.Ignore public static double largeDamageCooldownMultiplier = 1.5D;
+
+    static {
+        syncAliases();
+    }
+
+    public static void syncAliases() {
+        enabled = general.enabled;
+        rampUpEnabled = general.rampUpEnabled;
+        damageCooldownTicks = general.damageCooldownTicks;
+        minimumHungerPercent = general.minimumHungerPercent;
+        minimumSaturationLevel = general.minimumSaturationLevel;
+        updateIntervalTicks = general.updateIntervalTicks;
+        baseHealIntervalTicks = general.baseHealIntervalTicks;
+        fullStrengthHealIntervalTicks = general.fullStrengthHealIntervalTicks;
+        rampFullStrengthTicks = general.rampFullStrengthTicks;
+        healAmountPerTrigger = general.healAmountPerTrigger;
+
+        scaleWithMaxHealth = limits.scaleWithMaxHealth;
+        maxHealthScalingExponent = limits.maxHealthScalingExponent;
+        maxHealthScalingCap = limits.maxHealthScalingCap;
+        maxRegenHealthPercent = limits.maxRegenHealthPercent;
+        blockedEffects = limits.blockedEffects;
+        dimensionBlacklist = limits.dimensionBlacklist;
+        pvpDamageCooldownTicks = limits.pvpDamageCooldownTicks;
+        disableNaturalRegen = limits.disableNaturalRegen;
+        regenWhileSprinting = limits.regenWhileSprinting;
+
+        hungerBonusEnabled = hungerBonus.hungerBonusEnabled;
+        hungerPenaltyEnabled = hungerBonus.hungerPenaltyEnabled;
+        hungerPenaltySpeedMultiplier = hungerBonus.hungerPenaltySpeedMultiplier;
+        hungerPenaltyHealMultiplier = hungerBonus.hungerPenaltyHealMultiplier;
+        hungerBonusThresholdPercent = hungerBonus.hungerBonusThresholdPercent;
+        hungerBonusHealMultiplier = hungerBonus.hungerBonusHealMultiplier;
+        hungerBonusSpeedMultiplier = hungerBonus.hungerBonusSpeedMultiplier;
+        hungerBonusCooldownReduction = hungerBonus.hungerBonusCooldownReduction;
+        hungerFullBonusEnabled = hungerBonus.hungerFullBonusEnabled;
+        hungerFullBonusHealMultiplier = hungerBonus.hungerFullBonusHealMultiplier;
+        hungerFullBonusSpeedMultiplier = hungerBonus.hungerFullBonusSpeedMultiplier;
+        saturationBonusEnabled = hungerBonus.saturationBonusEnabled;
+        saturationBonusThreshold = hungerBonus.saturationBonusThreshold;
+        saturationBonusSpeedMultiplier = hungerBonus.saturationBonusSpeedMultiplier;
+        saturationBonusHealMultiplier = hungerBonus.saturationBonusHealMultiplier;
+
+        regenOnKillEnabled = regenOnKill.regenOnKillEnabled;
+        regenOnKillCooldownReduction = regenOnKill.regenOnKillCooldownReduction;
+        regenOnKillHostileOnly = regenOnKill.regenOnKillHostileOnly;
+        regenOnKillBlacklist = regenOnKill.regenOnKillBlacklist;
+        regenOnKillComboEnabled = regenOnKill.regenOnKillComboEnabled;
+        regenOnKillComboWindowTicks = regenOnKill.regenOnKillComboWindowTicks;
+        regenOnKillComboMaxStacks = regenOnKill.regenOnKillComboMaxStacks;
+        regenOnKillComboReductionPerStack = regenOnKill.regenOnKillComboReductionPerStack;
+
+        bonusStackingMode = bonuses.bonusStackingMode;
+        crouchBonusEnabled = bonuses.crouchBonusEnabled;
+        crouchSpeedMultiplier = bonuses.crouchSpeedMultiplier;
+        crouchHealMultiplier = bonuses.crouchHealMultiplier;
+        lightLevelBonusEnabled = bonuses.lightLevelBonusEnabled;
+        lightLevelMinMultiplier = bonuses.lightLevelMinMultiplier;
+        lightLevelMaxMultiplier = bonuses.lightLevelMaxMultiplier;
+        dayNightMultiplierEnabled = bonuses.dayNightMultiplierEnabled;
+        dayMultiplier = bonuses.dayMultiplier;
+        nightMultiplier = bonuses.nightMultiplier;
+        difficultyScalingEnabled = bonuses.difficultyScalingEnabled;
+        peacefulMultiplier = bonuses.peacefulMultiplier;
+        easyMultiplier = bonuses.easyMultiplier;
+        normalMultiplier = bonuses.normalMultiplier;
+        hardMultiplier = bonuses.hardMultiplier;
+
+        largeDamagePenaltyEnabled = largeDamagePenalty.largeDamagePenaltyEnabled;
+        largeDamageThresholdPercent = largeDamagePenalty.largeDamageThresholdPercent;
+        largeDamageCooldownMultiplier = largeDamagePenalty.largeDamageCooldownMultiplier;
+    }
+
+    public static int getMinimumFoodLevel() {
+        return (int) Math.ceil((Math.max(0, Math.min(100, minimumHungerPercent)) / 100.0D) * 20.0D);
+    }
+
+    public static int getHungerBonusThresholdFoodLevel() {
+        return (int) Math.ceil((Math.max(0, Math.min(100, hungerBonusThresholdPercent)) / 100.0D) * 20.0D);
+    }
 
     public static float getHealAmountPerUpdate(long outOfCombatTicks, float maxHealth, int foodLevel) {
-        if (!enabled) {
-            return 0.0F;
-        }
+        if (!enabled) return 0.0F;
 
         double healAmount = Math.max(0.01D, healAmountPerTrigger);
         double scaledHeal = healAmount * getMaxHealthScaleMultiplier(maxHealth);
-
         int updateTicks = Math.max(1, updateIntervalTicks);
-        double currentHealInterval = getCurrentHealIntervalTicks(outOfCombatTicks, foodLevel);
-
+        double currentHealInterval = getCurrentHealIntervalTicks(outOfCombatTicks);
         double healMult = getHungerHealMultiplier(foodLevel);
-        return (float) (scaledHeal * healMult * updateTicks / currentHealInterval);
+        double speedMult = getHungerSpeedMultiplier(foodLevel);
+        return (float)(scaledHeal * healMult * updateTicks / (currentHealInterval / speedMult));
     }
 
     public static int getEffectiveDamageCooldown(int foodLevel) {
         int base = Math.max(0, damageCooldownTicks);
         if (!hungerBonusEnabled) return base;
-        int threshold = (int) Math.ceil((Math.max(0, Math.min(100, hungerBonusThresholdPercent)) / 100.0D) * 20.0D);
-        if (foodLevel < threshold) return base;
+        if (foodLevel < getHungerBonusThresholdFoodLevel()) return base;
         int reduction = Math.max(0, Math.min(100, hungerBonusCooldownReduction));
-        return (int) (base * (1.0D - reduction / 100.0D));
+        return (int)(base * (1.0D - reduction / 100.0D));
     }
 
-    private static double getHungerHealMultiplier(int foodLevel) {
+    public static double getHungerHealMultiplier(int foodLevel) {
         if (!hungerBonusEnabled) return 1.0D;
         if (hungerFullBonusEnabled && foodLevel >= 20) return Math.max(1.0D, hungerFullBonusHealMultiplier);
-        int threshold = (int) Math.ceil((Math.max(0, Math.min(100, hungerBonusThresholdPercent)) / 100.0D) * 20.0D);
-        if (foodLevel >= threshold) return Math.max(1.0D, hungerBonusHealMultiplier);
+        if (foodLevel >= getHungerBonusThresholdFoodLevel()) return Math.max(1.0D, hungerBonusHealMultiplier);
         return 1.0D;
     }
 
-    private static double getCurrentHealIntervalTicks(long outOfCombatTicks, int foodLevel) {
-        int baseTicks = Math.max(1, baseHealIntervalTicks);
-        double interval;
-        if (!rampUpEnabled) {
-            interval = baseTicks;
-        } else {
-            int fullTicks = Math.max(1, fullStrengthHealIntervalTicks);
-            int rampTicks = Math.max(1, rampFullStrengthTicks);
-            double progress = Math.min(1.0D, (double) outOfCombatTicks / rampTicks);
-            // interpolate from baseTicks down to fullTicks as progress goes 0->1
-            interval = baseTicks + (fullTicks - baseTicks) * progress;
-        }
-        // Apply hunger speed multiplier (divides interval = faster ticks)
-        double speedMult = getHungerSpeedMultiplier(foodLevel);
-        return interval / speedMult;
-    }
-
-    private static double getHungerSpeedMultiplier(int foodLevel) {
+    public static double getHungerSpeedMultiplier(int foodLevel) {
         if (!hungerBonusEnabled) return 1.0D;
         if (hungerFullBonusEnabled && foodLevel >= 20) return Math.max(1.0D, hungerFullBonusSpeedMultiplier);
-        int threshold = (int) Math.ceil((Math.max(0, Math.min(100, hungerBonusThresholdPercent)) / 100.0D) * 20.0D);
-        if (foodLevel >= threshold) return Math.max(1.0D, hungerBonusSpeedMultiplier);
+        if (foodLevel >= getHungerBonusThresholdFoodLevel()) return Math.max(1.0D, hungerBonusSpeedMultiplier);
         return 1.0D;
+    }
+
+    public static double combineBonusMultipliers(List<Double> multipliers) {
+        if (multipliers == null || multipliers.isEmpty()) return 1.0D;
+        switch (bonusStackingMode) {
+            case ADDITIVE: {
+                double result = 1.0D;
+                for (double multiplier : multipliers) result += (multiplier - 1.0D);
+                return Math.max(0.0D, result);
+            }
+            case STRONGEST_ONLY: {
+                double strongest = 1.0D;
+                for (double multiplier : multipliers) strongest = Math.max(strongest, multiplier);
+                return strongest;
+            }
+            case MULTIPLICATIVE:
+            default: {
+                double result = 1.0D;
+                for (double multiplier : multipliers) result *= multiplier;
+                return Math.max(0.0D, result);
+            }
+        }
+    }
+
+    private static double getCurrentHealIntervalTicks(long outOfCombatTicks) {
+        int baseTicks = Math.max(1, baseHealIntervalTicks);
+        if (!rampUpEnabled) return baseTicks;
+        int fullTicks = Math.max(1, fullStrengthHealIntervalTicks);
+        int rampTicks = Math.max(1, rampFullStrengthTicks);
+        double progress = Math.min(1.0D, (double) outOfCombatTicks / rampTicks);
+        return baseTicks + (fullTicks - baseTicks) * progress;
     }
 
     private static double getMaxHealthScaleMultiplier(float maxHealth) {
-        if (!scaleWithMaxHealth || maxHealth <= 20.0F) {
-            return 1.0D;
-        }
-
+        if (!scaleWithMaxHealth || maxHealth <= 20.0F) return 1.0D;
         double normalized = Math.max(1.0D, maxHealth / 20.0D);
         double exponent = Math.max(0.1D, maxHealthScalingExponent);
         double multiplier = Math.pow(normalized, exponent);
@@ -284,6 +641,7 @@ public class PassiveRegenConfig {
         public static void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {
             if (PassiveRegenMod.MODID.equals(event.getModID())) {
                 ConfigManager.sync(PassiveRegenMod.MODID, Config.Type.INSTANCE);
+                syncAliases();
             }
         }
     }

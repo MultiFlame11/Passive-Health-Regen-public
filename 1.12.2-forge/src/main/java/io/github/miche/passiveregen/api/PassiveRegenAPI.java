@@ -13,7 +13,7 @@ import java.util.UUID;
 public final class PassiveRegenAPI {
 
     /**
-     * Internal hook — set by PassiveRegenHandler on construction.
+     * Internal hook  -- set by PassiveRegenHandler on construction.
      * Package-private so only classes in this package can write it.
      */
     private static IPassiveRegenInternals internals;
@@ -53,7 +53,7 @@ public final class PassiveRegenAPI {
      *
      * <p>If a boost is already active, the new one replaces it only when its
      * {@code multiplier} is greater than or equal to the active boost's multiplier
-     * (highest wins — boosts do <em>not</em> stack additively).
+     * (highest wins  -- boosts do <em>not</em> stack additively).
      * Applying the same multiplier refreshes the duration.
      *
      * @param playerUUID    UUID of the server-side player to affect.
@@ -79,6 +79,78 @@ public final class PassiveRegenAPI {
     public static void reduceCooldown(UUID playerUUID, int percentReduction) {
         if (internals != null) {
             internals.reduceCooldown(playerUUID, percentReduction);
+        }
+    }
+
+    /**
+     * Returns true if the player is currently past their damage cooldown and passive regen
+     * can actually heal them right now.
+     */
+    public static boolean isRegenReady(UUID playerUUID) {
+        return internals != null && internals.isRegenReady(playerUUID);
+    }
+
+    /**
+     * Returns true if passive regen is specifically blocked by insufficient hunger.
+     */
+    public static boolean isHungerBlocked(UUID playerUUID) {
+        return internals != null && internals.isHungerBlocked(playerUUID);
+    }
+
+    /**
+     * Returns the remaining cooldown in ticks before passive regen can begin.
+     * Returns 0 if the player is already ready or unavailable.
+     */
+    public static int getRemainingCooldownTicks(UUID playerUUID) {
+        return internals != null ? internals.getRemainingCooldownTicks(playerUUID) : 0;
+    }
+
+    /**
+     * Returns the effective heal amount that would be applied on the current regen update,
+     * after all active bonuses and temporary modifiers.
+     */
+    public static float getCurrentHealRate(UUID playerUUID) {
+        return internals != null ? internals.getCurrentHealRate(playerUUID) : 0.0F;
+    }
+
+    /**
+     * Applies a temporary regen penalty to a player.
+     *
+     * <p>Values below 1.0 slow regen. The strongest penalty wins and equal values refresh
+     * duration. Values are clamped to the 0.0-1.0 range.
+     */
+    public static void applyRegenPenalty(UUID playerUUID, double multiplier, int durationTicks) {
+        if (internals != null) {
+            internals.applyRegenPenalty(playerUUID, multiplier, durationTicks);
+        }
+    }
+
+    /**
+     * Completely blocks passive regen for the duration.
+     */
+    public static void blockRegen(UUID playerUUID, int durationTicks) {
+        if (internals != null) {
+            internals.blockRegen(playerUUID, durationTicks);
+        }
+    }
+
+    /**
+     * Temporarily bypasses the hunger and saturation minimum thresholds for a player.
+     *
+     * <p>While the override is active, regen fires at full rate regardless of how low
+     * the player's hunger or saturation is.  The hunger-penalty multipliers are also
+     * skipped.  Useful for consumable items (bandages, food buffs) that should work
+     * even when the player is starving.
+     *
+     * <p>Calling again while an override is already active refreshes the duration if the
+     * new expiry would be later than the current one.
+     *
+     * @param playerUUID    UUID of the server-side player to affect.
+     * @param durationTicks How long the bypass lasts in game ticks (20 ticks = 1 second).
+     */
+    public static void overrideHungerRestrictions(UUID playerUUID, int durationTicks) {
+        if (internals != null) {
+            internals.overrideHungerRestrictions(playerUUID, durationTicks);
         }
     }
 }
