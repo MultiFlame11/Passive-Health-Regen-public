@@ -73,7 +73,7 @@ Heals faster for players with larger health pools. Off by default.
 | `maxHealthScalingExponent` | `0.5` | Curve for the scaling. 0.5 = square root, gentle curve. 1.0 = linear. |
 | `maxHealthScalingCap` | `2.0` | Maximum multiplier from health scaling. |
 
-### Conditions **[upcoming]**
+### Conditions
 
 | Option | Default | Description |
 |---|---|---|
@@ -81,10 +81,10 @@ Heals faster for players with larger health pools. Off by default.
 | `blockedEffects` | `[]` | List of effect IDs that pause regen while active. Example: `["minecraft:poison"]` |
 | `dimensionBlacklist` | `[]` | List of dimension IDs where regen is disabled. Example: `["minecraft:the_nether"]` |
 | `pvpDamageCooldownTicks` | `-1` | Separate cooldown after taking damage from another player. -1 = same as regular cooldown. |
-| `disableNaturalRegen` | `false` | Drains food exhaustion to suppress vanilla natural regeneration. Useful if you want this mod to be the only source of passive HP recovery. |
-| `regenWhileSprinting` | `true` | If false, regen is paused while the player is sprinting. |
+| `disableNaturalRegen` | `false` | Drains food exhaustion to suppress vanilla natural regeneration. Useful if you want this mod to be the only source of passive HP recovery. **[upcoming]** |
+| `regenWhileSprinting` | `true` | If false, regen is paused while the player is sprinting. **[upcoming]** |
 
-### Hunger bonus
+### Hunger bonus **[upcoming]**
 
 Gives bonus healing speed, heal amount, and shorter cooldown when hunger is above a threshold. Both tiers off by default.
 
@@ -136,8 +136,8 @@ Killing an enemy reduces your remaining regen cooldown. Off by default.
 |---|---|---|
 | `regenOnKillEnabled` | `false` | Enables cooldown reduction on kill. |
 | `regenOnKillCooldownReduction` | `50` | Percent of remaining cooldown removed on kill. 50 = cuts remaining wait in half. |
-| `regenOnKillHostileOnly` | `false` | If true, only hostile mobs grant the cooldown reduction. Stops passive animals from being farmed for free regen. **[upcoming]** |
-| `regenOnKillBlacklist` | `[]` | Entity IDs that never grant the kill bonus. Example: `["minecraft:villager"]` **[upcoming]** |
+| `regenOnKillHostileOnly` | `false` | If true, only hostile mobs grant the cooldown reduction. Stops passive animals from being farmed for free regen. |
+| `regenOnKillBlacklist` | `[]` | Entity IDs that never grant the kill bonus. Example: `["minecraft:villager"]` |
 
 ### Kill combo **[upcoming]**
 
