@@ -2,6 +2,7 @@ package io.github.miche.passiveregen.client;
 
 public final class RegenHudState {
     private static final RegenHudState INSTANCE = new RegenHudState();
+    private static final long VISUAL_HEALTH_LERP_MS = 200L;
     private static final long HEAL_FLASH_MS = 140L;
     private static final long HEAL_THUMP_MS = 120L;
     private static final long POST_FLASH_GLOW_DELAY_MS = 350L;
@@ -22,12 +23,10 @@ public final class RegenHudState {
     private float previousVisualHealth;
     private long visualHealthStartMs;
     private long lastHealFlashAtMs;
-    private boolean nearCampfire;
     private float hudFadeAlpha = 0.0F;
     private long lastFadeUpdateMs = 0L;
     private long lastSparkleAtMs;
     private boolean prevHealthWasAtMax = true;
-    private static final long VISUAL_HEALTH_LERP_MS = 200L;
 
     private RegenHudState() {
     }
@@ -36,13 +35,12 @@ public final class RegenHudState {
         return INSTANCE;
     }
 
-    public void applyPacket(long outOfCombatTicks, int damageCooldownTicks, boolean regenActive, boolean hungerBlocked, boolean justHealed, float currentHealth, float maxHealth, int maxRegenHealthPercent, boolean nearCampfire) {
+    public void applyPacket(long outOfCombatTicks, int damageCooldownTicks, boolean regenActive, boolean hungerBlocked, boolean justHealed, float currentHealth, float maxHealth, int maxRegenHealthPercent) {
         this.outOfCombatTicks = outOfCombatTicks;
         this.damageCooldownTicks = damageCooldownTicks;
         this.regenActive = regenActive;
         this.hungerBlocked = hungerBlocked;
         this.justHealed = justHealed;
-        this.nearCampfire = nearCampfire;
         this.packetReceivedAtMs = System.currentTimeMillis();
         if (justHealed) {
             this.lastHealFlashAtMs = this.packetReceivedAtMs;
@@ -77,7 +75,9 @@ public final class RegenHudState {
     }
 
     public float getCooldownProgress() {
-        if (damageCooldownTicks <= 0) return regenActive ? 1.0F : 0.0F;
+        if (damageCooldownTicks <= 0) {
+            return regenActive ? 1.0F : 0.0F;
+        }
         long elapsedMs = Math.max(0L, System.currentTimeMillis() - packetReceivedAtMs);
         double extrapolatedTicks = outOfCombatTicks + (elapsedMs / 50.0D);
         return (float) Math.max(0.0D, Math.min(1.0D, extrapolatedTicks / damageCooldownTicks));
@@ -89,7 +89,9 @@ public final class RegenHudState {
 
     public float getSecondsRemaining() {
         float progress = getCooldownProgress();
-        if (progress >= 1.0F) return 0.0F;
+        if (progress >= 1.0F) {
+            return 0.0F;
+        }
         float remainingTicks = Math.max(0.0F, damageCooldownTicks - (progress * damageCooldownTicks));
         return remainingTicks / 20.0F;
     }
@@ -110,9 +112,15 @@ public final class RegenHudState {
     }
 
     public float getHealthFillProgress() {
-        if (maxHealth <= 0.0F) return 0.0F;
+        if (maxHealth <= 0.0F) {
+            return 0.0F;
+        }
+
         float capHealth = maxHealth * (Math.max(0, Math.min(100, maxRegenHealthPercent)) / 100.0F);
-        if (capHealth <= 0.0F) return 0.0F;
+        if (capHealth <= 0.0F) {
+            return 0.0F;
+        }
+
         return Math.max(0.0F, Math.min(1.0F, getDisplayedHealth() / capHealth));
     }
 
@@ -122,10 +130,6 @@ public final class RegenHudState {
 
     public boolean isHungerBlocked() {
         return hungerBlocked;
-    }
-
-    public boolean isNearCampfire() {
-        return nearCampfire;
     }
 
     /** True when HP fill is below the critical threshold and health is greater than zero. */
@@ -154,6 +158,7 @@ public final class RegenHudState {
         long elapsed = System.currentTimeMillis() - lastHealFlashAtMs;
         if (elapsed >= HEAL_THUMP_MS) return 1.0F;
         float progress = elapsed / (float) HEAL_THUMP_MS;
+        // Peaks at 1.08x immediately, eases out with quadratic decay
         return 1.0F + 0.08F * (1.0F - progress * progress);
     }
 
@@ -197,9 +202,9 @@ public final class RegenHudState {
 
     public float getGlowPhaseSeconds() {
         if (lastHealFlashAtMs <= 0L) {
+            // No heal yet  -- free-running phase from session start
             return System.currentTimeMillis() / 1000.0F;
         }
-
         long glowStartMs = lastHealFlashAtMs + HEAL_FLASH_MS + POST_FLASH_GLOW_DELAY_MS;
         long elapsed = System.currentTimeMillis() - glowStartMs;
         return Math.max(0L, elapsed) / 1000.0F;
@@ -231,7 +236,6 @@ public final class RegenHudState {
         previousVisualHealth = 0.0F;
         visualHealthStartMs = 0L;
         lastHealFlashAtMs = 0L;
-        nearCampfire = false;
         hudFadeAlpha = 0.0F;
         lastFadeUpdateMs = 0L;
         lastSparkleAtMs = 0L;

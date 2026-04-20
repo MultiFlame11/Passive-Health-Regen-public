@@ -14,8 +14,13 @@ public final class RegenHudConfig {
     private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("passive-health-regen-hud.json");
 
     public boolean showRegenHud = true;
-    public boolean showTimer = false;
+    public boolean showTimer = true;
+    public double hudOpacity = 1.0D;
+    public boolean hudFadeEnabled = true;
+    public int hudFadeInMs = 500;
+    public int hudFadeOutMs = 400;
     public String hudColor = "FF69B4";
+    public String hudBlockedColor = "FF9F1A";
     public double hudScale = 1.0D;
     public String hudPosition = "LEFT_OF_HEALTH";
     public int hudOffsetX = 0;
@@ -23,6 +28,7 @@ public final class RegenHudConfig {
     public String hudCustomAnchor = "TOP_LEFT";
     public String showCondition = "injured";
     public boolean hideAtFullHealth = true;
+    public boolean hudRichAnimations = true;
 
     public ParticleEntry[] particles = new ParticleEntry[0];
 
@@ -51,7 +57,12 @@ public final class RegenHudConfig {
         RegenHudConfig copy = new RegenHudConfig();
         copy.showRegenHud = showRegenHud;
         copy.showTimer = showTimer;
+        copy.hudOpacity = hudOpacity;
+        copy.hudFadeEnabled = hudFadeEnabled;
+        copy.hudFadeInMs = hudFadeInMs;
+        copy.hudFadeOutMs = hudFadeOutMs;
         copy.hudColor = hudColor;
+        copy.hudBlockedColor = hudBlockedColor;
         copy.hudScale = hudScale;
         copy.hudPosition = hudPosition;
         copy.hudOffsetX = hudOffsetX;
@@ -59,6 +70,7 @@ public final class RegenHudConfig {
         copy.hudCustomAnchor = hudCustomAnchor;
         copy.showCondition = showCondition;
         copy.hideAtFullHealth = hideAtFullHealth;
+        copy.hudRichAnimations = hudRichAnimations;
         copy.particles = copyParticles(particles);
         copy.sounds = copySounds(sounds);
         return copy;
@@ -67,7 +79,12 @@ public final class RegenHudConfig {
     public void copyFrom(RegenHudConfig other) {
         showRegenHud = other.showRegenHud;
         showTimer = other.showTimer;
+        hudOpacity = other.hudOpacity;
+        hudFadeEnabled = other.hudFadeEnabled;
+        hudFadeInMs = other.hudFadeInMs;
+        hudFadeOutMs = other.hudFadeOutMs;
         hudColor = other.hudColor;
+        hudBlockedColor = other.hudBlockedColor;
         hudScale = other.hudScale;
         hudPosition = other.hudPosition;
         hudOffsetX = other.hudOffsetX;
@@ -75,6 +92,7 @@ public final class RegenHudConfig {
         hudCustomAnchor = other.hudCustomAnchor;
         showCondition = other.showCondition;
         hideAtFullHealth = other.hideAtFullHealth;
+        hudRichAnimations = other.hudRichAnimations;
         particles = copyParticles(other.particles);
         sounds = copySounds(other.sounds);
     }
@@ -89,7 +107,12 @@ public final class RegenHudConfig {
                 writer.write("  // Master toggle for the passive regen HUD widget."); writer.newLine();
                 writer.write("  \"showRegenHud\": " + showRegenHud + ","); writer.newLine();
                 writer.write("  \"showTimer\": " + showTimer + ","); writer.newLine();
+                writer.write("  \"hudOpacity\": " + hudOpacity + ","); writer.newLine();
+                writer.write("  \"hudFadeEnabled\": " + hudFadeEnabled + ","); writer.newLine();
+                writer.write("  \"hudFadeInMs\": " + hudFadeInMs + ","); writer.newLine();
+                writer.write("  \"hudFadeOutMs\": " + hudFadeOutMs + ","); writer.newLine();
                 writer.write("  \"hudColor\": \"" + escape(hudColor) + "\","); writer.newLine();
+                writer.write("  \"hudBlockedColor\": \"" + escape(hudBlockedColor) + "\","); writer.newLine();
                 writer.write("  \"hudScale\": " + hudScale + ","); writer.newLine();
                 writer.write("  // Presets: RIGHT_OF_HEALTH, LEFT_OF_HEALTH, ABOVE_HUNGER, BELOW_HUNGER, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, CUSTOM"); writer.newLine();
                 writer.write("  \"hudPosition\": \"" + escape(hudPosition) + "\","); writer.newLine();
@@ -100,6 +123,8 @@ public final class RegenHudConfig {
                 writer.write("  // Show conditions: injured, out_of_combat, always"); writer.newLine();
                 writer.write("  \"showCondition\": \"" + escape(showCondition) + "\","); writer.newLine();
                 writer.write("  \"hideAtFullHealth\": " + hideAtFullHealth + ","); writer.newLine();
+                writer.write("  // If true: heartbeat thump on heal + organic multi-sine glow. false = simpler flat animation."); writer.newLine();
+                writer.write("  \"hudRichAnimations\": " + hudRichAnimations + ","); writer.newLine();
                 writer.newLine();
                 writer.write("  // Cosmetic feedback only. Leave arrays empty to disable."); writer.newLine();
                 writer.write("  // Example particles: [{ \"id\": \"minecraft:heart\", \"count\": 3, \"spread\": 0.3 }]"); writer.newLine();
@@ -114,6 +139,15 @@ public final class RegenHudConfig {
 
     public int getHudArgb() {
         String value = hudColor == null ? "FF69B4" : hudColor.trim();
+        return parseColor(value, 0xFFFF69B4);
+    }
+
+    public int getHudBlockedArgb() {
+        String value = hudBlockedColor == null ? "FF9F1A" : hudBlockedColor.trim();
+        return parseColor(value, 0xFFFF9F1A);
+    }
+
+    private static int parseColor(String value, int fallback) {
         if (value.startsWith("#")) {
             value = value.substring(1);
         }
@@ -123,11 +157,14 @@ public final class RegenHudConfig {
         try {
             return (int) Long.parseLong(value, 16);
         } catch (NumberFormatException ignored) {
-            return 0xFFFF69B4;
+            return fallback;
         }
     }
 
     public void sanitize() {
+        hudOpacity = clampDouble(hudOpacity, 0.0D, 1.0D);
+        hudFadeInMs = clampInt(hudFadeInMs, 0, 3000);
+        hudFadeOutMs = clampInt(hudFadeOutMs, 0, 3000);
         hudScale = clampDouble(hudScale, 0.5D, 4.0D);
         hudOffsetX = clampInt(hudOffsetX, -2000, 2000);
         hudOffsetY = clampInt(hudOffsetY, -2000, 2000);

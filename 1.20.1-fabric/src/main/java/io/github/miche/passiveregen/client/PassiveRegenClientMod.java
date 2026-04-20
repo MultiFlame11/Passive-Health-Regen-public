@@ -20,11 +20,13 @@ public final class PassiveRegenClientMod implements ClientModInitializer {
             long outOfCombatTicks = buf.readLong();
             int damageCooldownTicks = buf.readInt();
             boolean regenActive = buf.readBoolean();
+            boolean hungerBlocked = buf.readBoolean();
             boolean justHealed = buf.readBoolean();
             float currentHealth = buf.readFloat();
             float maxHealth = buf.readFloat();
             int maxRegenHealthPercent = buf.readInt();
-            client.execute(() -> RegenHudState.get().applyPacket(outOfCombatTicks, damageCooldownTicks, regenActive, justHealed, currentHealth, maxHealth, maxRegenHealthPercent));
+            boolean nearCampfire = buf.readBoolean();
+            client.execute(() -> RegenHudState.get().applyPacket(outOfCombatTicks, damageCooldownTicks, regenActive, hungerBlocked, justHealed, currentHealth, maxHealth, maxRegenHealthPercent, nearCampfire));
         });
 
         HudRenderCallback.EVENT.register(new RegenHudRenderer());

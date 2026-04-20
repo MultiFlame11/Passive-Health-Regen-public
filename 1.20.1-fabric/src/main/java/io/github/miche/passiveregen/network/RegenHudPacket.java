@@ -12,15 +12,17 @@ public final class RegenHudPacket {
 
     private RegenHudPacket() {}
 
-    public static void send(ServerPlayer player, long outOfCombatTicks, int damageCooldownTicks, boolean regenActive, boolean justHealed, float currentHealth, float maxHealth, int maxRegenHealthPercent) {
+    public static void send(ServerPlayer player, long outOfCombatTicks, int damageCooldownTicks, boolean regenActive, boolean hungerBlocked, boolean justHealed, float currentHealth, float maxHealth, int maxRegenHealthPercent, boolean nearCampfire) {
         FriendlyByteBuf buf = PacketByteBufs.create();
         buf.writeLong(outOfCombatTicks);
         buf.writeInt(damageCooldownTicks);
         buf.writeBoolean(regenActive);
+        buf.writeBoolean(hungerBlocked);
         buf.writeBoolean(justHealed);
         buf.writeFloat(currentHealth);
         buf.writeFloat(maxHealth);
         buf.writeInt(maxRegenHealthPercent);
+        buf.writeBoolean(nearCampfire);
         ServerPlayNetworking.send(player, ID, buf);
     }
 }

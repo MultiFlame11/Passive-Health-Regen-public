@@ -31,12 +31,32 @@ public final class PassiveRegenHudConfigScreen {
             .setSaveConsumer(value -> working.showRegenHud = value)
             .build());
         hud.addEntry(entries.startBooleanToggle(Component.translatable("config.passiveregen.show_timer"), working.showTimer)
-            .setDefaultValue(false)
+            .setDefaultValue(true)
             .setSaveConsumer(value -> working.showTimer = value)
+            .build());
+        hud.addEntry(entries.startDoubleField(Component.translatable("config.passiveregen.hud_opacity"), working.hudOpacity)
+            .setDefaultValue(1.0D)
+            .setSaveConsumer(value -> working.hudOpacity = value)
+            .build());
+        hud.addEntry(entries.startBooleanToggle(Component.translatable("config.passiveregen.hud_fade_enabled"), working.hudFadeEnabled)
+            .setDefaultValue(true)
+            .setSaveConsumer(value -> working.hudFadeEnabled = value)
+            .build());
+        hud.addEntry(entries.startIntField(Component.translatable("config.passiveregen.hud_fade_in_ms"), working.hudFadeInMs)
+            .setDefaultValue(500)
+            .setSaveConsumer(value -> working.hudFadeInMs = value)
+            .build());
+        hud.addEntry(entries.startIntField(Component.translatable("config.passiveregen.hud_fade_out_ms"), working.hudFadeOutMs)
+            .setDefaultValue(400)
+            .setSaveConsumer(value -> working.hudFadeOutMs = value)
             .build());
         hud.addEntry(entries.startStrField(Component.translatable("config.passiveregen.hud_color"), working.hudColor)
             .setDefaultValue("FF69B4")
             .setSaveConsumer(value -> working.hudColor = value)
+            .build());
+        hud.addEntry(entries.startStrField(Component.translatable("config.passiveregen.hud_blocked_color"), working.hudBlockedColor)
+            .setDefaultValue("FF9F1A")
+            .setSaveConsumer(value -> working.hudBlockedColor = value)
             .build());
         hud.addEntry(entries.startDoubleField(Component.translatable("config.passiveregen.hud_scale"), working.hudScale)
             .setDefaultValue(1.0D)
@@ -68,6 +88,10 @@ public final class PassiveRegenHudConfigScreen {
         hud.addEntry(entries.startBooleanToggle(Component.translatable("config.passiveregen.hide_at_full_health"), working.hideAtFullHealth)
             .setDefaultValue(true)
             .setSaveConsumer(value -> working.hideAtFullHealth = value)
+            .build());
+        hud.addEntry(entries.startBooleanToggle(Component.translatable("config.passiveregen.hud_rich_animations"), working.hudRichAnimations)
+            .setDefaultValue(true)
+            .setSaveConsumer(value -> working.hudRichAnimations = value)
             .build());
 
         ConfigCategory feedback = builder.getOrCreateCategory(Component.translatable("config.passiveregen.category.feedback"));
