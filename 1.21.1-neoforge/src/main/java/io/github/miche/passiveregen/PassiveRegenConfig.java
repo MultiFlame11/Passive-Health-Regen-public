@@ -1,348 +1,334 @@
 package io.github.miche.passiveregen;
 
+import java.util.Collections;
+import java.util.List;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
-public class PassiveRegenConfig {
+public final class PassiveRegenConfig {
     public static final ModConfigSpec SPEC;
 
     public static final ModConfigSpec.BooleanValue ENABLED;
     public static final ModConfigSpec.BooleanValue RAMP_UP_ENABLED;
     public static final ModConfigSpec.IntValue DAMAGE_COOLDOWN_TICKS;
     public static final ModConfigSpec.IntValue MINIMUM_HUNGER_PERCENT;
+    public static final ModConfigSpec.DoubleValue MINIMUM_SATURATION_LEVEL;
     public static final ModConfigSpec.IntValue UPDATE_INTERVAL_TICKS;
     public static final ModConfigSpec.IntValue BASE_HEAL_INTERVAL_TICKS;
     public static final ModConfigSpec.IntValue FULL_STRENGTH_HEAL_INTERVAL_TICKS;
     public static final ModConfigSpec.IntValue RAMP_FULL_STRENGTH_TICKS;
     public static final ModConfigSpec.DoubleValue HEAL_AMOUNT_PER_TRIGGER;
+
     public static final ModConfigSpec.BooleanValue SCALE_WITH_MAX_HEALTH;
     public static final ModConfigSpec.DoubleValue MAX_HEALTH_SCALING_EXPONENT;
     public static final ModConfigSpec.DoubleValue MAX_HEALTH_SCALING_CAP;
     public static final ModConfigSpec.IntValue MAX_REGEN_HEALTH_PERCENT;
-    public static final ModConfigSpec.ConfigValue<java.util.List<? extends String>> BLOCKED_EFFECTS;
-    public static final ModConfigSpec.ConfigValue<java.util.List<? extends String>> DIMENSION_BLACKLIST;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> BLOCKED_EFFECTS;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> DIMENSION_BLACKLIST;
     public static final ModConfigSpec.IntValue PVP_DAMAGE_COOLDOWN_TICKS;
-
-    // ── Hunger Bonus ────────────────────────────────────────────
+    public static final ModConfigSpec.BooleanValue DISABLE_NATURAL_REGEN;
+    public static final ModConfigSpec.BooleanValue REGEN_WHILE_SPRINTING;
 
     public static final ModConfigSpec.BooleanValue HUNGER_BONUS_ENABLED;
     public static final ModConfigSpec.IntValue HUNGER_BONUS_THRESHOLD_PERCENT;
     public static final ModConfigSpec.DoubleValue HUNGER_BONUS_HEAL_MULTIPLIER;
     public static final ModConfigSpec.DoubleValue HUNGER_BONUS_SPEED_MULTIPLIER;
     public static final ModConfigSpec.IntValue HUNGER_BONUS_COOLDOWN_REDUCTION;
+    public static final ModConfigSpec.BooleanValue HUNGER_PENALTY_ENABLED;
+    public static final ModConfigSpec.DoubleValue HUNGER_PENALTY_SPEED_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue HUNGER_PENALTY_HEAL_MULTIPLIER;
     public static final ModConfigSpec.BooleanValue HUNGER_FULL_BONUS_ENABLED;
     public static final ModConfigSpec.DoubleValue HUNGER_FULL_BONUS_HEAL_MULTIPLIER;
     public static final ModConfigSpec.DoubleValue HUNGER_FULL_BONUS_SPEED_MULTIPLIER;
 
-    // ── Regen on Kill ───────────────────────────────────────────
+    public static final ModConfigSpec.BooleanValue SATURATION_BONUS_ENABLED;
+    public static final ModConfigSpec.DoubleValue SATURATION_BONUS_THRESHOLD;
+    public static final ModConfigSpec.DoubleValue SATURATION_BONUS_DEACTIVATE_THRESHOLD;
+    public static final ModConfigSpec.DoubleValue SATURATION_BONUS_SPEED_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue SATURATION_BONUS_HEAL_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue SATURATION_BONUS_COST_PER_HP;
+    public static final ModConfigSpec.DoubleValue SATURATION_BONUS_IDLE_DRAIN_PER_TICK;
+    public static final ModConfigSpec.DoubleValue SATURATION_BONUS_MIN_SATURATION_FLOOR;
+    public static final ModConfigSpec.DoubleValue SATURATION_BONUS_FLAT_HEAL_BONUS;
+    public static final ModConfigSpec.BooleanValue SATURATION_BONUS_SCALE_BY_EXCESS;
+
+    public static final ModConfigSpec.BooleanValue DISABLE_HEALING_DURING_POISON;
+    public static final ModConfigSpec.BooleanValue DISABLE_HEALING_DURING_WITHER;
 
     public static final ModConfigSpec.BooleanValue REGEN_ON_KILL_ENABLED;
     public static final ModConfigSpec.IntValue REGEN_ON_KILL_COOLDOWN_REDUCTION;
+    public static final ModConfigSpec.BooleanValue REGEN_ON_KILL_HOSTILE_ONLY;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> REGEN_ON_KILL_BLACKLIST;
+    public static final ModConfigSpec.BooleanValue REGEN_ON_KILL_COMBO_ENABLED;
+    public static final ModConfigSpec.IntValue REGEN_ON_KILL_COMBO_WINDOW_TICKS;
+    public static final ModConfigSpec.IntValue REGEN_ON_KILL_COMBO_MAX_STACKS;
+    public static final ModConfigSpec.IntValue REGEN_ON_KILL_COMBO_REDUCTION_PER_STACK;
 
-    // ── Natural Regen ───────────────────────────────────────────
+    public static final ModConfigSpec.EnumValue<BonusStackingMode> BONUS_STACKING_MODE;
+    public static final ModConfigSpec.BooleanValue CROUCH_BONUS_ENABLED;
+    public static final ModConfigSpec.DoubleValue CROUCH_SPEED_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue CROUCH_HEAL_MULTIPLIER;
+    public static final ModConfigSpec.BooleanValue LIGHT_LEVEL_BONUS_ENABLED;
+    public static final ModConfigSpec.DoubleValue LIGHT_LEVEL_MIN_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue LIGHT_LEVEL_MAX_MULTIPLIER;
+    public static final ModConfigSpec.BooleanValue DAY_NIGHT_MULTIPLIER_ENABLED;
+    public static final ModConfigSpec.DoubleValue DAY_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue NIGHT_MULTIPLIER;
+    public static final ModConfigSpec.BooleanValue DIFFICULTY_SCALING_ENABLED;
+    public static final ModConfigSpec.DoubleValue PEACEFUL_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue EASY_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue NORMAL_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue HARD_MULTIPLIER;
 
-    public static final ModConfigSpec.BooleanValue DISABLE_NATURAL_REGEN;
+    public static final ModConfigSpec.BooleanValue LARGE_DAMAGE_PENALTY_ENABLED;
+    public static final ModConfigSpec.IntValue LARGE_DAMAGE_THRESHOLD_PERCENT;
+    public static final ModConfigSpec.DoubleValue LARGE_DAMAGE_COOLDOWN_MULTIPLIER;
 
-    // ── Sprinting ────────────────────────────────────────────────
+    public static final ModConfigSpec.BooleanValue CAMPFIRE_REGEN_ENABLED;
+    public static final ModConfigSpec.IntValue CAMPFIRE_RADIUS;
+    public static final ModConfigSpec.DoubleValue CAMPFIRE_SPEED_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue CAMPFIRE_HEAL_MULTIPLIER;
+    public static final ModConfigSpec.BooleanValue CAMPFIRE_COOLDOWN_REDUCTION_ENABLED;
+    public static final ModConfigSpec.IntValue CAMPFIRE_COOLDOWN_REDUCTION_PERCENT;
 
-    public static final ModConfigSpec.BooleanValue REGEN_WHILE_SPRINTING;
+    public static final ModConfigSpec.BooleanValue FREEZING_PENALTY_ENABLED;
+    public static final ModConfigSpec.DoubleValue FREEZING_PENALTY_THRESHOLD_PERCENT;
+    public static final ModConfigSpec.DoubleValue FREEZING_SPEED_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue FREEZING_HEAL_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue FREEZING_COOLDOWN_MULTIPLIER;
+    public static final ModConfigSpec.BooleanValue FREEZING_BLOCKS_REGEN;
+
+    public enum BonusStackingMode {
+        MULTIPLICATIVE,
+        ADDITIVE,
+        STRONGEST_ONLY
+    }
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
+
         builder.push("general");
+        ENABLED = builder.define("enabled", true);
+        DAMAGE_COOLDOWN_TICKS = builder.defineInRange("damageCooldownTicks", 100, 0, 12000);
+        MINIMUM_HUNGER_PERCENT = builder.defineInRange("minimumHungerPercent", 50, 0, 100);
+        MINIMUM_SATURATION_LEVEL = builder.defineInRange("minimumSaturationLevel", 0.0D, 0.0D, 20.0D);
+        UPDATE_INTERVAL_TICKS = builder.defineInRange("updateIntervalTicks", 20, 1, 200);
+        BASE_HEAL_INTERVAL_TICKS = builder.defineInRange("baseHealIntervalTicks", 100, 1, 12000);
+        RAMP_UP_ENABLED = builder.define("rampUpEnabled", false);
+        FULL_STRENGTH_HEAL_INTERVAL_TICKS = builder.defineInRange("fullStrengthHealIntervalTicks", 50, 1, 12000);
+        RAMP_FULL_STRENGTH_TICKS = builder.defineInRange("rampFullStrengthTicks", 600, 1, 12000);
+        HEAL_AMOUNT_PER_TRIGGER = builder.defineInRange("healAmountPerTrigger", 0.5D, 0.01D, 100.0D);
+        builder.pop();
 
-        ENABLED = builder
-            .comment("Set to false to completely disable passive regeneration.")
-            .define("enabled", true);
-
-        RAMP_UP_ENABLED = builder
-            .comment(
-                "If true, regen starts slow and speeds up the longer you stay out of combat.",
-                "At rampFullStrengthTicks out-of-combat ticks you reach peak regen speed.",
-                "If false, regen always runs at the baseHealIntervalTicks rate."
-            )
-            .define("rampUpEnabled", false);
-
-        DAMAGE_COOLDOWN_TICKS = builder
-            .comment(
-                "How many ticks after taking damage before passive regen can start.",
-                "20 ticks = 1 second. Default 100 = 5 seconds.",
-                "Examples: 40 = 2s,  100 = 5s (default),  200 = 10s,  600 = 30s"
-            )
-            .defineInRange("damageCooldownTicks", 100, 0, 12000);
-
-        MINIMUM_HUNGER_PERCENT = builder
-            .comment(
-                "Minimum hunger bar % required before passive regen can occur.",
-                "0 = regen works even on an empty hunger bar.",
-                "50 = at least half hunger required (default).",
-                "100 = hunger bar must be completely full.",
-                "Examples: 0 (any hunger), 25 (quarter+), 50 (half+, default), 75 (three-quarter+), 100 (full only)"
-            )
-            .defineInRange("minimumHungerPercent", 50, 0, 100);
-
-        UPDATE_INTERVAL_TICKS = builder
-            .comment(
-                "How often (in ticks) players are checked for passive regen.",
-                "20 ticks = 1 second. Lower = more precise; higher = cheaper.",
-                "Default 20 (every second). Rarely needs changing.",
-                "Examples: 10 = 0.5s, 20 = 1s (default), 40 = 2s"
-            )
-            .defineInRange("updateIntervalTicks", 20, 1, 200);
-
-        BASE_HEAL_INTERVAL_TICKS = builder
-            .comment(
-                "Ticks between each heal trigger at the base (starting) regen speed.",
-                "Lower = faster regen. Vanilla Regeneration I is approximately 50 ticks.",
-                "20 ticks = 1 second. Default 100 = heal once every 5 seconds.",
-                "Examples: 20 = 1s (fast), 50 = 2.5s (vanilla regen I), 100 = 5s (default), 200 = 10s (slow)"
-            )
-            .defineInRange("baseHealIntervalTicks", 100, 1, 12000);
-
-        FULL_STRENGTH_HEAL_INTERVAL_TICKS = builder
-            .comment(
-                "Ticks between each heal trigger at peak ramp-up speed (only used if rampUpEnabled = true).",
-                "This is the FASTEST the regen will ever go, reached after rampFullStrengthTicks out-of-combat.",
-                "Must be less than baseHealIntervalTicks for ramp-up to have any effect.",
-                "Default 50 = heal once every 2.5 seconds at peak.",
-                "Examples: 20 = 1s (very fast), 50 = 2.5s (default), 75 = 3.75s"
-            )
-            .defineInRange("fullStrengthHealIntervalTicks", 50, 1, 12000);
-
-        RAMP_FULL_STRENGTH_TICKS = builder
-            .comment(
-                "Total out-of-combat ticks to reach peak regen speed (only used if rampUpEnabled = true).",
-                "20 ticks = 1 second. Default 600 = 30 seconds out of combat to reach full speed.",
-                "Examples: 200 = 10s, 400 = 20s, 600 = 30s (default), 1200 = 1 minute"
-            )
-            .defineInRange("rampFullStrengthTicks", 600, 1, 12000);
-
-        HEAL_AMOUNT_PER_TRIGGER = builder
-            .comment(
-                "How much health to restore each time regen triggers.",
-                "0.5 = quarter heart (default),  1.0 = half heart,  2.0 = full heart.",
-                "This is before any max-health scaling."
-            )
-            .defineInRange("healAmountPerTrigger", 0.5D, 0.01D, 100.0D);
-
-        SCALE_WITH_MAX_HEALTH = builder
-            .comment(
-                "If true, regen heals slightly more for players with more than 20 max HP.",
-                "Uses a soft curve (controlled by maxHealthScalingExponent) so it does not become extreme.",
-                "Useful for modpacks with high-HP bosses or modded players with extra hearts."
-            )
-            .define("scaleWithMaxHealth", false);
-
-        MAX_HEALTH_SCALING_EXPONENT = builder
-            .comment(
-                "Controls how steeply regen scales with max HP when scaleWithMaxHealth = true.",
-                "0.5 = square-root scaling (gentle, default).  1.0 = linear.  2.0 = quadratic (steep).",
-                "Lower values keep scaling gentle even at very high HP pools.",
-                "Example at 40 max HP (2x base): exponent 0.5 gives ~1.41x heal, 1.0 gives 2.0x heal."
-            )
-            .defineInRange("maxHealthScalingExponent", 0.5D, 0.1D, 4.0D);
-
-        MAX_HEALTH_SCALING_CAP = builder
-            .comment(
-                "Maximum heal multiplier from max-health scaling (when scaleWithMaxHealth = true).",
-                "Default 2.0 means scaling can at most double the base heal amount, no matter how high HP gets.",
-                "Examples: 1.5 = 50% more at most, 2.0 = double at most (default), 3.0 = triple at most"
-            )
-            .defineInRange("maxHealthScalingCap", 2.0D, 1.0D, 100.0D);
-
-        MAX_REGEN_HEALTH_PERCENT = builder
-            .comment(
-                "Regen stops when health reaches this percentage of max health.",
-                "100 = regen all the way to full (default). 80 = stops at 80% health.",
-                "Examples: 60 = stops at 60%, 80 = stops at 80%, 100 = full regen (default)"
-            )
-            .defineInRange("maxRegenHealthPercent", 100, 0, 100);
-
-        BLOCKED_EFFECTS = builder
-            .comment(
-                "List of potion/mob effect IDs that prevent passive regen while the player has them active.",
-                "Empty list = no effects block regen (default).",
-                "Use namespaced IDs like minecraft:poison, minecraft:wither, minecraft:weakness.",
-                "Examples: [] = nothing blocks regen,  [\"minecraft:poison\"] = paused while poisoned"
-            )
-            .defineList("blockedEffects", java.util.Collections.emptyList(), o -> o instanceof String);
-
-        DIMENSION_BLACKLIST = builder
-            .comment(
-                "List of dimension IDs where passive regen is disabled entirely.",
-                "Empty list = regen works in all dimensions (default).",
-                "Use namespaced dimension IDs.",
-                "Examples: [] = all dimensions,  [\"minecraft:the_nether\"] = disabled in Nether,  [\"minecraft:the_nether\", \"minecraft:the_end\"] = Nether and End"
-            )
-            .defineList("dimensionBlacklist", java.util.Collections.emptyList(), o -> o instanceof String);
-
-        PVP_DAMAGE_COOLDOWN_TICKS = builder
-            .comment(
-                "Separate damage cooldown (in ticks) when a player hits you instead of a mob. -1 = same as damageCooldownTicks (default).",
-                "20 ticks = 1 second. Set higher to delay regen longer after PvP hits.",
-                "Examples: -1 = same as regular (default),  200 = 10s,  400 = 20s,  600 = 30s"
-            )
-            .defineInRange("pvpDamageCooldownTicks", -1, -1, 12000);
-
+        builder.push("limits");
+        SCALE_WITH_MAX_HEALTH = builder.define("scaleWithMaxHealth", false);
+        MAX_HEALTH_SCALING_EXPONENT = builder.defineInRange("maxHealthScalingExponent", 0.5D, 0.1D, 4.0D);
+        MAX_HEALTH_SCALING_CAP = builder.defineInRange("maxHealthScalingCap", 2.0D, 1.0D, 100.0D);
+        MAX_REGEN_HEALTH_PERCENT = builder.defineInRange("maxRegenHealthPercent", 100, 0, 100);
+        BLOCKED_EFFECTS = builder.defineList("blockedEffects", Collections.emptyList(), PassiveRegenConfig::isString);
+        DIMENSION_BLACKLIST = builder.defineList("dimensionBlacklist", Collections.emptyList(), PassiveRegenConfig::isString);
+        PVP_DAMAGE_COOLDOWN_TICKS = builder.defineInRange("pvpDamageCooldownTicks", -1, -1, 12000);
+        DISABLE_NATURAL_REGEN = builder.define("disableNaturalRegen", false);
+        REGEN_WHILE_SPRINTING = builder.define("regenWhileSprinting", true);
         builder.pop();
 
         builder.push("hungerBonus");
+        HUNGER_BONUS_ENABLED = builder.define("hungerBonusEnabled", false);
+        HUNGER_BONUS_THRESHOLD_PERCENT = builder.defineInRange("hungerBonusThresholdPercent", 75, 0, 100);
+        HUNGER_BONUS_HEAL_MULTIPLIER = builder.defineInRange("hungerBonusHealMultiplier", 1.5D, 1.0D, 100.0D);
+        HUNGER_BONUS_SPEED_MULTIPLIER = builder.defineInRange("hungerBonusSpeedMultiplier", 1.5D, 1.0D, 100.0D);
+        HUNGER_BONUS_COOLDOWN_REDUCTION = builder.defineInRange("hungerBonusCooldownReduction", 25, 0, 100);
+        HUNGER_PENALTY_ENABLED = builder.define("hungerPenaltyEnabled", false);
+        HUNGER_PENALTY_SPEED_MULTIPLIER = builder.defineInRange("hungerPenaltySpeedMultiplier", 0.25D, 0.01D, 1.0D);
+        HUNGER_PENALTY_HEAL_MULTIPLIER = builder.defineInRange("hungerPenaltyHealMultiplier", 1.0D, 0.01D, 1.0D);
+        HUNGER_FULL_BONUS_ENABLED = builder.define("hungerFullBonusEnabled", false);
+        HUNGER_FULL_BONUS_HEAL_MULTIPLIER = builder.defineInRange("hungerFullBonusHealMultiplier", 2.0D, 1.0D, 100.0D);
+        HUNGER_FULL_BONUS_SPEED_MULTIPLIER = builder.defineInRange("hungerFullBonusSpeedMultiplier", 2.0D, 1.0D, 100.0D);
+        builder.pop();
 
-        HUNGER_BONUS_ENABLED = builder
-            .comment("Master toggle for the hunger bonus system. When enabled, high hunger boosts regen.")
-            .define("hungerBonusEnabled", false);
+        builder.push("saturationBonus");
+        SATURATION_BONUS_ENABLED = builder.define("saturationBonusEnabled", true);
+        SATURATION_BONUS_THRESHOLD = builder.defineInRange("saturationBonusThreshold", 10.0D, 0.0D, 20.0D);
+        SATURATION_BONUS_DEACTIVATE_THRESHOLD = builder.defineInRange("saturationBonusDeactivateThreshold", 10.0D, 0.0D, 20.0D);
+        SATURATION_BONUS_SPEED_MULTIPLIER = builder.defineInRange("saturationBonusSpeedMultiplier", 2.0D, 1.0D, 10.0D);
+        SATURATION_BONUS_HEAL_MULTIPLIER = builder.defineInRange("saturationBonusHealMultiplier", 2.0D, 1.0D, 10.0D);
+        SATURATION_BONUS_COST_PER_HP = builder.defineInRange("saturationBonusCostPerHp", 1.0D, 0.0D, 10.0D);
+        SATURATION_BONUS_IDLE_DRAIN_PER_TICK = builder.defineInRange("saturationBonusIdleDrainPerTick", 0.0D, 0.0D, 1.0D);
+        SATURATION_BONUS_MIN_SATURATION_FLOOR = builder.defineInRange("saturationBonusMinSaturationFloor", 0.0D, 0.0D, 20.0D);
+        SATURATION_BONUS_FLAT_HEAL_BONUS = builder.defineInRange("saturationBonusFlatHealBonus", 0.25D, 0.0D, 10.0D);
+        SATURATION_BONUS_SCALE_BY_EXCESS = builder.define("saturationBonusScaleByExcess", false);
+        builder.pop();
 
-        HUNGER_BONUS_THRESHOLD_PERCENT = builder
-            .comment(
-                "Hunger % threshold to trigger the hunger bonus (0-100). Default 75.",
-                "Example: 75 = bonus kicks in when hunger bar is at least 75% full."
-            )
-            .defineInRange("hungerBonusThresholdPercent", 75, 0, 100);
-
-        HUNGER_BONUS_HEAL_MULTIPLIER = builder
-            .comment(
-                "Heal amount multiplier applied when hunger exceeds hungerBonusThresholdPercent.",
-                "Default 1.5 = 50% more healing."
-            )
-            .defineInRange("hungerBonusHealMultiplier", 1.5D, 1.0D, 100.0D);
-
-        HUNGER_BONUS_SPEED_MULTIPLIER = builder
-            .comment(
-                "Heal speed multiplier (reduces effective heal interval) when hunger exceeds threshold.",
-                "Default 1.5 = regen ticks 50% faster."
-            )
-            .defineInRange("hungerBonusSpeedMultiplier", 1.5D, 1.0D, 100.0D);
-
-        HUNGER_BONUS_COOLDOWN_REDUCTION = builder
-            .comment(
-                "Percentage to reduce the damage cooldown by when hunger exceeds threshold (0-100).",
-                "Default 25 = cooldown is 25% shorter. 0 = no cooldown reduction."
-            )
-            .defineInRange("hungerBonusCooldownReduction", 25, 0, 100);
-
-        HUNGER_FULL_BONUS_ENABLED = builder
-            .comment("Second-tier bonus at 100% hunger (full bar). Off by default.")
-            .define("hungerFullBonusEnabled", false);
-
-        HUNGER_FULL_BONUS_HEAL_MULTIPLIER = builder
-            .comment(
-                "Heal amount multiplier at full hunger (overrides hungerBonusHealMultiplier when hunger = 20/20).",
-                "Default 2.0 = double healing at full hunger."
-            )
-            .defineInRange("hungerFullBonusHealMultiplier", 2.0D, 1.0D, 100.0D);
-
-        HUNGER_FULL_BONUS_SPEED_MULTIPLIER = builder
-            .comment(
-                "Heal speed multiplier at full hunger (overrides hungerBonusSpeedMultiplier when hunger = 20/20).",
-                "Default 2.0 = regen ticks twice as fast at full hunger."
-            )
-            .defineInRange("hungerFullBonusSpeedMultiplier", 2.0D, 1.0D, 100.0D);
-
+        builder.push("statusEffects");
+        DISABLE_HEALING_DURING_POISON = builder.define("disableHealingDuringPoison", true);
+        DISABLE_HEALING_DURING_WITHER = builder.define("disableHealingDuringWither", true);
         builder.pop();
 
         builder.push("regenOnKill");
-
-        REGEN_ON_KILL_ENABLED = builder
-            .comment("If true, killing an entity reduces the player's damage cooldown.")
-            .define("regenOnKillEnabled", false);
-
-        REGEN_ON_KILL_COOLDOWN_REDUCTION = builder
-            .comment(
-                "Percentage of the remaining damage cooldown to remove on kill (0-100).",
-                "100 = fully clears the cooldown (regen starts immediately after a kill).",
-                "Default 50 = halves the remaining cooldown."
-            )
-            .defineInRange("regenOnKillCooldownReduction", 50, 0, 100);
-
+        REGEN_ON_KILL_ENABLED = builder.define("regenOnKillEnabled", false);
+        REGEN_ON_KILL_COOLDOWN_REDUCTION = builder.defineInRange("regenOnKillCooldownReduction", 50, 0, 100);
+        REGEN_ON_KILL_HOSTILE_ONLY = builder.define("regenOnKillHostileOnly", false);
+        REGEN_ON_KILL_BLACKLIST = builder.defineList("regenOnKillBlacklist", Collections.emptyList(), PassiveRegenConfig::isString);
+        REGEN_ON_KILL_COMBO_ENABLED = builder.define("regenOnKillComboEnabled", false);
+        REGEN_ON_KILL_COMBO_WINDOW_TICKS = builder.defineInRange("regenOnKillComboWindowTicks", 200, 20, 1200);
+        REGEN_ON_KILL_COMBO_MAX_STACKS = builder.defineInRange("regenOnKillComboMaxStacks", 5, 1, 20);
+        REGEN_ON_KILL_COMBO_REDUCTION_PER_STACK = builder.defineInRange("regenOnKillComboReductionPerStack", 10, 0, 100);
         builder.pop();
 
-        builder.push("naturalRegen");
-
-        DISABLE_NATURAL_REGEN = builder
-            .comment("If true, vanilla natural regeneration is disabled.")
-            .define("disableNaturalRegen", false);
-
+        builder.push("bonuses");
+        BONUS_STACKING_MODE = builder.defineEnum("bonusStackingMode", BonusStackingMode.MULTIPLICATIVE);
+        CROUCH_BONUS_ENABLED = builder.define("crouchBonusEnabled", false);
+        CROUCH_SPEED_MULTIPLIER = builder.defineInRange("crouchSpeedMultiplier", 1.5D, 1.0D, 10.0D);
+        CROUCH_HEAL_MULTIPLIER = builder.defineInRange("crouchHealMultiplier", 1.0D, 1.0D, 10.0D);
+        LIGHT_LEVEL_BONUS_ENABLED = builder.define("lightLevelBonusEnabled", false);
+        LIGHT_LEVEL_MIN_MULTIPLIER = builder.defineInRange("lightLevelMinMultiplier", 0.75D, 0.1D, 2.0D);
+        LIGHT_LEVEL_MAX_MULTIPLIER = builder.defineInRange("lightLevelMaxMultiplier", 1.25D, 0.1D, 2.0D);
+        DAY_NIGHT_MULTIPLIER_ENABLED = builder.define("dayNightMultiplierEnabled", false);
+        DAY_MULTIPLIER = builder.defineInRange("dayMultiplier", 1.25D, 0.1D, 3.0D);
+        NIGHT_MULTIPLIER = builder.defineInRange("nightMultiplier", 0.75D, 0.1D, 3.0D);
+        DIFFICULTY_SCALING_ENABLED = builder.define("difficultyScalingEnabled", false);
+        PEACEFUL_MULTIPLIER = builder.defineInRange("peacefulMultiplier", 2.0D, 0.1D, 5.0D);
+        EASY_MULTIPLIER = builder.defineInRange("easyMultiplier", 1.25D, 0.1D, 5.0D);
+        NORMAL_MULTIPLIER = builder.defineInRange("normalMultiplier", 1.0D, 0.1D, 5.0D);
+        HARD_MULTIPLIER = builder.defineInRange("hardMultiplier", 0.75D, 0.1D, 5.0D);
         builder.pop();
 
-        builder.push("sprinting");
-
-        REGEN_WHILE_SPRINTING = builder
-            .comment("If false, passive regen is paused while the player is sprinting.")
-            .define("regenWhileSprinting", true);
-
+        builder.push("largeDamagePenalty");
+        LARGE_DAMAGE_PENALTY_ENABLED = builder.define("largeDamagePenaltyEnabled", false);
+        LARGE_DAMAGE_THRESHOLD_PERCENT = builder.defineInRange("largeDamageThresholdPercent", 50, 1, 100);
+        LARGE_DAMAGE_COOLDOWN_MULTIPLIER = builder.defineInRange("largeDamageCooldownMultiplier", 1.5D, 1.0D, 5.0D);
         builder.pop();
+
+        builder.push("campfire");
+        CAMPFIRE_REGEN_ENABLED = builder.define("campfireRegenEnabled", true);
+        CAMPFIRE_RADIUS = builder.defineInRange("campfireRadius", 8, 1, 32);
+        CAMPFIRE_SPEED_MULTIPLIER = builder.defineInRange("campfireSpeedMultiplier", 2.0D, 1.0D, 10.0D);
+        CAMPFIRE_HEAL_MULTIPLIER = builder.defineInRange("campfireHealMultiplier", 1.0D, 1.0D, 10.0D);
+        CAMPFIRE_COOLDOWN_REDUCTION_ENABLED = builder.define("campfireCooldownReductionEnabled", false);
+        CAMPFIRE_COOLDOWN_REDUCTION_PERCENT = builder.defineInRange("campfireCooldownReductionPercent", 20, 0, 100);
+        builder.pop();
+
+        builder.push("freezing");
+        FREEZING_PENALTY_ENABLED = builder.define("freezingPenaltyEnabled", true);
+        FREEZING_PENALTY_THRESHOLD_PERCENT = builder.defineInRange("freezingPenaltyThresholdPercent", 0.0D, 0.0D, 1.0D);
+        FREEZING_SPEED_MULTIPLIER = builder.defineInRange("freezingSpeedMultiplier", 0.5D, 0.01D, 1.0D);
+        FREEZING_HEAL_MULTIPLIER = builder.defineInRange("freezingHealMultiplier", 0.75D, 0.01D, 1.0D);
+        FREEZING_COOLDOWN_MULTIPLIER = builder.defineInRange("freezingCooldownMultiplier", 1.75D, 1.0D, 10.0D);
+        FREEZING_BLOCKS_REGEN = builder.define("freezingBlocksRegen", false);
+        builder.pop();
+
         SPEC = builder.build();
     }
 
-    public static float getHealAmountPerUpdate(long outOfCombatTicks, float maxHealth, int foodLevel) {
-        if (!ENABLED.get()) {
-            return 0.0F;
-        }
+    private PassiveRegenConfig() {
+    }
 
-        double healAmount = Math.max(0.01D, HEAL_AMOUNT_PER_TRIGGER.get());
-        double scaledHeal = healAmount * getMaxHealthScaleMultiplier(maxHealth);
+    public static int getMinimumFoodLevel() {
+        return (int) Math.ceil(clampPercent(MINIMUM_HUNGER_PERCENT.get()) / 100.0D * 20.0D);
+    }
 
-        int updateTicks = Math.max(1, UPDATE_INTERVAL_TICKS.get());
-        double currentHealInterval = getCurrentHealIntervalTicks(outOfCombatTicks, foodLevel);
-
-        double healMult = getHungerHealMultiplier(foodLevel);
-        return (float) (scaledHeal * healMult * updateTicks / currentHealInterval);
+    public static int getHungerBonusThresholdFoodLevel() {
+        return (int) Math.ceil(clampPercent(HUNGER_BONUS_THRESHOLD_PERCENT.get()) / 100.0D * 20.0D);
     }
 
     public static int getEffectiveDamageCooldown(int foodLevel) {
         int base = Math.max(0, DAMAGE_COOLDOWN_TICKS.get());
-        if (!HUNGER_BONUS_ENABLED.get()) return base;
-        int threshold = (int) Math.ceil((Math.max(0, Math.min(100, HUNGER_BONUS_THRESHOLD_PERCENT.get())) / 100.0D) * 20.0D);
-        if (foodLevel < threshold) return base;
-        int reduction = Math.max(0, Math.min(100, HUNGER_BONUS_COOLDOWN_REDUCTION.get()));
+        if (!HUNGER_BONUS_ENABLED.get()) {
+            return base;
+        }
+        if (foodLevel < getHungerBonusThresholdFoodLevel()) {
+            return base;
+        }
+        int reduction = clampInt(HUNGER_BONUS_COOLDOWN_REDUCTION.get(), 0, 100);
         return (int) (base * (1.0D - reduction / 100.0D));
     }
 
-    private static double getHungerHealMultiplier(int foodLevel) {
-        if (!HUNGER_BONUS_ENABLED.get()) return 1.0D;
-        if (HUNGER_FULL_BONUS_ENABLED.get() && foodLevel >= 20) return Math.max(1.0D, HUNGER_FULL_BONUS_HEAL_MULTIPLIER.get());
-        int threshold = (int) Math.ceil((Math.max(0, Math.min(100, HUNGER_BONUS_THRESHOLD_PERCENT.get())) / 100.0D) * 20.0D);
-        if (foodLevel >= threshold) return Math.max(1.0D, HUNGER_BONUS_HEAL_MULTIPLIER.get());
-        return 1.0D;
-    }
-
-    private static double getHungerSpeedMultiplier(int foodLevel) {
-        if (!HUNGER_BONUS_ENABLED.get()) return 1.0D;
-        if (HUNGER_FULL_BONUS_ENABLED.get() && foodLevel >= 20) return Math.max(1.0D, HUNGER_FULL_BONUS_SPEED_MULTIPLIER.get());
-        int threshold = (int) Math.ceil((Math.max(0, Math.min(100, HUNGER_BONUS_THRESHOLD_PERCENT.get())) / 100.0D) * 20.0D);
-        if (foodLevel >= threshold) return Math.max(1.0D, HUNGER_BONUS_SPEED_MULTIPLIER.get());
-        return 1.0D;
-    }
-
-    private static double getCurrentHealIntervalTicks(long outOfCombatTicks, int foodLevel) {
-        int baseTicks = Math.max(1, BASE_HEAL_INTERVAL_TICKS.get());
-        double interval;
-        if (!RAMP_UP_ENABLED.get()) {
-            interval = baseTicks;
-        } else {
-            int fullTicks = Math.max(1, FULL_STRENGTH_HEAL_INTERVAL_TICKS.get());
-            int rampTicks = Math.max(1, RAMP_FULL_STRENGTH_TICKS.get());
-            double progress = Math.min(1.0D, (double) outOfCombatTicks / rampTicks);
-            // interpolate from baseTicks down to fullTicks as progress goes 0->1
-            interval = baseTicks + (fullTicks - baseTicks) * progress;
+    public static double getHungerHealMultiplier(int foodLevel) {
+        if (!HUNGER_BONUS_ENABLED.get()) {
+            return 1.0D;
         }
-        // Apply hunger speed multiplier (divides interval = faster ticks)
-        double speedMult = getHungerSpeedMultiplier(foodLevel);
-        return interval / speedMult;
+        if (HUNGER_FULL_BONUS_ENABLED.get() && foodLevel >= 20) {
+            return Math.max(1.0D, HUNGER_FULL_BONUS_HEAL_MULTIPLIER.get());
+        }
+        if (foodLevel >= getHungerBonusThresholdFoodLevel()) {
+            return Math.max(1.0D, HUNGER_BONUS_HEAL_MULTIPLIER.get());
+        }
+        return 1.0D;
     }
 
-    public static int getMinimumFoodLevel() {
-        return (int) Math.ceil((Math.max(0, Math.min(100, MINIMUM_HUNGER_PERCENT.get())) / 100.0D) * 20.0D);
+    public static double getHungerSpeedMultiplier(int foodLevel) {
+        if (!HUNGER_BONUS_ENABLED.get()) {
+            return 1.0D;
+        }
+        if (HUNGER_FULL_BONUS_ENABLED.get() && foodLevel >= 20) {
+            return Math.max(1.0D, HUNGER_FULL_BONUS_SPEED_MULTIPLIER.get());
+        }
+        if (foodLevel >= getHungerBonusThresholdFoodLevel()) {
+            return Math.max(1.0D, HUNGER_BONUS_SPEED_MULTIPLIER.get());
+        }
+        return 1.0D;
     }
 
-    private static double getMaxHealthScaleMultiplier(float maxHealth) {
-        if (!SCALE_WITH_MAX_HEALTH.get() || maxHealth <= 20.0F) {
+    public static double combineBonusMultipliers(List<Double> multipliers) {
+        if (multipliers == null || multipliers.isEmpty()) {
             return 1.0D;
         }
 
+        return switch (BONUS_STACKING_MODE.get()) {
+            case ADDITIVE -> {
+                double result = 1.0D;
+                for (double multiplier : multipliers) {
+                    result += multiplier - 1.0D;
+                }
+                yield Math.max(0.0D, result);
+            }
+            case STRONGEST_ONLY -> {
+                double strongest = 1.0D;
+                for (double multiplier : multipliers) {
+                    strongest = Math.max(strongest, multiplier);
+                }
+                yield strongest;
+            }
+            case MULTIPLICATIVE -> {
+                double result = 1.0D;
+                for (double multiplier : multipliers) {
+                    result *= multiplier;
+                }
+                yield Math.max(0.0D, result);
+            }
+        };
+    }
+
+    public static double getCurrentHealIntervalTicks(long outOfCombatTicks) {
+        int baseTicks = Math.max(1, BASE_HEAL_INTERVAL_TICKS.get());
+        if (!RAMP_UP_ENABLED.get()) {
+            return baseTicks;
+        }
+        int fullTicks = Math.max(1, FULL_STRENGTH_HEAL_INTERVAL_TICKS.get());
+        int rampTicks = Math.max(1, RAMP_FULL_STRENGTH_TICKS.get());
+        double progress = Math.min(1.0D, (double) outOfCombatTicks / rampTicks);
+        return baseTicks + (fullTicks - baseTicks) * progress;
+    }
+
+    public static double getMaxHealthScaleMultiplier(float maxHealth) {
+        if (!SCALE_WITH_MAX_HEALTH.get() || maxHealth <= 20.0F) {
+            return 1.0D;
+        }
         double normalized = Math.max(1.0D, maxHealth / 20.0D);
         double exponent = Math.max(0.1D, MAX_HEALTH_SCALING_EXPONENT.get());
         double multiplier = Math.pow(normalized, exponent);
         double cap = Math.max(1.0D, MAX_HEALTH_SCALING_CAP.get());
         return Math.min(cap, multiplier);
+    }
+
+    private static boolean isString(Object value) {
+        return value instanceof String;
+    }
+
+    private static int clampPercent(int value) {
+        return clampInt(value, 0, 100);
+    }
+
+    private static int clampInt(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 }

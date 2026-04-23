@@ -46,10 +46,26 @@ public final class PassiveRegenConfig {
     public boolean hungerFullBonusEnabled = false;
     public double hungerFullBonusHealMultiplier = 2.0D;
     public double hungerFullBonusSpeedMultiplier = 2.0D;
-    public boolean saturationBonusEnabled = false;
+
+    public boolean saturationBonusEnabled = true;
     public double saturationBonusThreshold = 10.0D;
-    public double saturationBonusSpeedMultiplier = 1.25D;
-    public double saturationBonusHealMultiplier = 1.25D;
+
+    public double saturationBonusDeactivateThreshold = 10.0D;
+    public double saturationBonusSpeedMultiplier = 2.0D;
+    public double saturationBonusHealMultiplier = 2.0D;
+
+    public double saturationBonusCostPerHp = 1.0D;
+
+    public double saturationBonusIdleDrainPerTick = 0.0D;
+
+    public double saturationBonusMinSaturationFloor = 0.0D;
+
+    public double saturationBonusFlatHealBonus = 0.25D;
+
+    public boolean saturationBonusScaleByExcess = false;
+
+    public boolean disableHealingDuringPoison = true;
+    public boolean disableHealingDuringWither = true;
 
     public boolean regenOnKillEnabled = false;
     public int regenOnKillCooldownReduction = 50;
@@ -80,8 +96,19 @@ public final class PassiveRegenConfig {
     public int largeDamageThresholdPercent = 50;
     public double largeDamageCooldownMultiplier = 1.5D;
 
-    public boolean campfireRegenEnabled = false;
+    public boolean campfireRegenEnabled = true;
     public int campfireRadius = 8;
+    public double campfireSpeedMultiplier = 2.0D;
+    public double campfireHealMultiplier = 1.0D;
+    public boolean campfireCooldownReductionEnabled = false;
+    public int campfireCooldownReductionPercent = 20;
+
+    public boolean freezingPenaltyEnabled = true;
+    public double freezingPenaltyThresholdPercent = 0.0D;
+    public double freezingSpeedMultiplier = 0.5D;
+    public double freezingHealMultiplier = 0.75D;
+    public double freezingCooldownMultiplier = 1.75D;
+    public boolean freezingBlocksRegen = false;
 
     public enum BonusStackingMode {
         MULTIPLICATIVE,
@@ -150,10 +177,28 @@ public final class PassiveRegenConfig {
                 writer.write("  \"hungerFullBonusEnabled\": " + hungerFullBonusEnabled + ","); writer.newLine();
                 writer.write("  \"hungerFullBonusHealMultiplier\": " + hungerFullBonusHealMultiplier + ","); writer.newLine();
                 writer.write("  \"hungerFullBonusSpeedMultiplier\": " + hungerFullBonusSpeedMultiplier + ","); writer.newLine();
+                writer.newLine();
+                writer.write("  // Saturation bonus"); writer.newLine();
                 writer.write("  \"saturationBonusEnabled\": " + saturationBonusEnabled + ","); writer.newLine();
                 writer.write("  \"saturationBonusThreshold\": " + saturationBonusThreshold + ","); writer.newLine();
+                writer.write("  // Once active, bonus stays active until sat drops to this value (hysteresis). Equal to threshold = off."); writer.newLine();
+                writer.write("  \"saturationBonusDeactivateThreshold\": " + saturationBonusDeactivateThreshold + ","); writer.newLine();
                 writer.write("  \"saturationBonusSpeedMultiplier\": " + saturationBonusSpeedMultiplier + ","); writer.newLine();
                 writer.write("  \"saturationBonusHealMultiplier\": " + saturationBonusHealMultiplier + ","); writer.newLine();
+                writer.write("  // Saturation consumed per 1 HP healed while bonus active. Vanilla saturation-heal uses 1.5."); writer.newLine();
+                writer.write("  \"saturationBonusCostPerHp\": " + saturationBonusCostPerHp + ","); writer.newLine();
+                writer.write("  // Optional idle wick: extra per-tick drain while bonus active. 0.005 â‰ˆ 0.1 sat/sec. 0 = vanilla model."); writer.newLine();
+                writer.write("  \"saturationBonusIdleDrainPerTick\": " + saturationBonusIdleDrainPerTick + ","); writer.newLine();
+                writer.write("  // Drain cannot push saturation below this level. 0 = no floor."); writer.newLine();
+                writer.write("  \"saturationBonusMinSaturationFloor\": " + saturationBonusMinSaturationFloor + ","); writer.newLine();
+                writer.write("  // Flat HP added per heal tick (on top of multipliers). Makes ticks feel chunkier."); writer.newLine();
+                writer.write("  \"saturationBonusFlatHealBonus\": " + saturationBonusFlatHealBonus + ","); writer.newLine();
+                writer.write("  // When true, bonus strength scales linearly with sat above threshold (0% at threshold, 100% at 20)."); writer.newLine();
+                writer.write("  \"saturationBonusScaleByExcess\": " + saturationBonusScaleByExcess + ","); writer.newLine();
+                writer.newLine();
+                writer.write("  // Status effect blockers (visuals always play; toggle only affects regen)"); writer.newLine();
+                writer.write("  \"disableHealingDuringPoison\": " + disableHealingDuringPoison + ","); writer.newLine();
+                writer.write("  \"disableHealingDuringWither\": " + disableHealingDuringWither + ","); writer.newLine();
                 writer.newLine();
                 writer.write("  // Regen on kill"); writer.newLine();
                 writer.write("  \"regenOnKillEnabled\": " + regenOnKillEnabled + ","); writer.newLine();
@@ -187,9 +232,30 @@ public final class PassiveRegenConfig {
                 writer.write("  \"largeDamageThresholdPercent\": " + largeDamageThresholdPercent + ","); writer.newLine();
                 writer.write("  \"largeDamageCooldownMultiplier\": " + largeDamageCooldownMultiplier + ","); writer.newLine();
                 writer.newLine();
-                writer.write("  // Campfire aura"); writer.newLine();
+                writer.write("  // Campfire aura. Warm up near a lit campfire/soul campfire."); writer.newLine();
                 writer.write("  \"campfireRegenEnabled\": " + campfireRegenEnabled + ","); writer.newLine();
-                writer.write("  \"campfireRadius\": " + campfireRadius); writer.newLine();
+                writer.write("  \"campfireRadius\": " + campfireRadius + ","); writer.newLine();
+                writer.write("  // Faster ticks while near a campfire. 1.0 disables the speed bump."); writer.newLine();
+                writer.write("  \"campfireSpeedMultiplier\": " + campfireSpeedMultiplier + ","); writer.newLine();
+                writer.write("  // Bigger heal per tick while near a campfire. 1.0 disables the heal bump."); writer.newLine();
+                writer.write("  \"campfireHealMultiplier\": " + campfireHealMultiplier + ","); writer.newLine();
+                writer.write("  // One-shot cooldown reduction when player first sits near a campfire after taking damage."); writer.newLine();
+                writer.write("  // Stacks on top of bandages / regenOnKill / API reduceCooldown calls."); writer.newLine();
+                writer.write("  \"campfireCooldownReductionEnabled\": " + campfireCooldownReductionEnabled + ","); writer.newLine();
+                writer.write("  \"campfireCooldownReductionPercent\": " + campfireCooldownReductionPercent + ","); writer.newLine();
+                writer.newLine();
+                writer.write("  // Freezing penalty (1.17+). Slows/blocks regen while the player is frozen in powder snow."); writer.newLine();
+                writer.write("  \"freezingPenaltyEnabled\": " + freezingPenaltyEnabled + ","); writer.newLine();
+                writer.write("  // Fraction of getTicksRequiredToFreeze before the penalty kicks in. 0.4 = 40% frozen."); writer.newLine();
+                writer.write("  \"freezingPenaltyThresholdPercent\": " + freezingPenaltyThresholdPercent + ","); writer.newLine();
+                writer.write("  // Tick speed multiplier while frozen past threshold. <1.0 = slower. 1.0 = no change."); writer.newLine();
+                writer.write("  \"freezingSpeedMultiplier\": " + freezingSpeedMultiplier + ","); writer.newLine();
+                writer.write("  // Heal amount multiplier while frozen past threshold. <1.0 = smaller heals."); writer.newLine();
+                writer.write("  \"freezingHealMultiplier\": " + freezingHealMultiplier + ","); writer.newLine();
+                writer.write("  // Extends the out-of-combat wait while frozen. 1.5 = 50% longer cooldown before regen starts."); writer.newLine();
+                writer.write("  \"freezingCooldownMultiplier\": " + freezingCooldownMultiplier + ","); writer.newLine();
+                writer.write("  // If true, no regen at all while frozen past threshold. Overrides the multipliers."); writer.newLine();
+                writer.write("  \"freezingBlocksRegen\": " + freezingBlocksRegen); writer.newLine();
                 writer.write("}"); writer.newLine();
             }
         } catch (IOException ignored) {
@@ -289,6 +355,12 @@ public final class PassiveRegenConfig {
         baseHealIntervalTicks = clampInt(baseHealIntervalTicks, 1, 12000);
         fullStrengthHealIntervalTicks = clampInt(fullStrengthHealIntervalTicks, 1, 12000);
         rampFullStrengthTicks = clampInt(rampFullStrengthTicks, 1, 12000);
+        if (updateIntervalTicks > baseHealIntervalTicks) {
+            updateIntervalTicks = baseHealIntervalTicks;
+        }
+        if (updateIntervalTicks > fullStrengthHealIntervalTicks) {
+            updateIntervalTicks = fullStrengthHealIntervalTicks;
+        }
         healAmountPerTrigger = clampDouble(healAmountPerTrigger, 0.01D, 100.0D);
 
         maxHealthScalingExponent = clampDouble(maxHealthScalingExponent, 0.1D, 4.0D);
@@ -309,6 +381,11 @@ public final class PassiveRegenConfig {
         saturationBonusThreshold = clampDouble(saturationBonusThreshold, 0.0D, 20.0D);
         saturationBonusSpeedMultiplier = clampDouble(saturationBonusSpeedMultiplier, 1.0D, 10.0D);
         saturationBonusHealMultiplier = clampDouble(saturationBonusHealMultiplier, 1.0D, 10.0D);
+        saturationBonusCostPerHp = clampDouble(saturationBonusCostPerHp, 0.0D, 10.0D);
+        saturationBonusDeactivateThreshold = clampDouble(saturationBonusDeactivateThreshold, 0.0D, saturationBonusThreshold);
+        saturationBonusIdleDrainPerTick = clampDouble(saturationBonusIdleDrainPerTick, 0.0D, 1.0D);
+        saturationBonusMinSaturationFloor = clampDouble(saturationBonusMinSaturationFloor, 0.0D, 20.0D);
+        saturationBonusFlatHealBonus = clampDouble(saturationBonusFlatHealBonus, 0.0D, 10.0D);
 
         regenOnKillCooldownReduction = clampInt(regenOnKillCooldownReduction, 0, 100);
         if (regenOnKillBlacklist == null) regenOnKillBlacklist = new String[0];
@@ -332,6 +409,13 @@ public final class PassiveRegenConfig {
         largeDamageCooldownMultiplier = clampDouble(largeDamageCooldownMultiplier, 1.0D, 5.0D);
 
         campfireRadius = clampInt(campfireRadius, 1, 32);
+        campfireSpeedMultiplier = clampDouble(campfireSpeedMultiplier, 1.0D, 10.0D);
+        campfireHealMultiplier = clampDouble(campfireHealMultiplier, 1.0D, 10.0D);
+        campfireCooldownReductionPercent = clampInt(campfireCooldownReductionPercent, 0, 100);
+        freezingPenaltyThresholdPercent = clampDouble(freezingPenaltyThresholdPercent, 0.0D, 1.0D);
+        freezingSpeedMultiplier = clampDouble(freezingSpeedMultiplier, 0.01D, 1.0D);
+        freezingHealMultiplier = clampDouble(freezingHealMultiplier, 0.01D, 1.0D);
+        freezingCooldownMultiplier = clampDouble(freezingCooldownMultiplier, 1.0D, 10.0D);
     }
 
     private static String toJsonArray(String[] values) {

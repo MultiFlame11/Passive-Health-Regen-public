@@ -4,9 +4,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
 import net.minecraftforge.fml.common.eventhandler.Event;
 
-/**
- * Fired when passive regen is about to heal, and after it successfully heals.
- */
 public abstract class PassiveRegenTickEvent extends Event {
     protected final EntityPlayer player;
     protected float healAmount;

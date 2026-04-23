@@ -14,6 +14,9 @@ public final class RegenHudState {
     private boolean regenActive;
     private boolean hungerBlocked;
     private boolean justHealed;
+    private boolean saturationBonus;
+    private boolean poisoned;
+    private boolean withered;
     private float currentHealth;
     private float maxHealth;
     private int maxRegenHealthPercent;
@@ -35,12 +38,15 @@ public final class RegenHudState {
         return INSTANCE;
     }
 
-    public void applyPacket(long outOfCombatTicks, int damageCooldownTicks, boolean regenActive, boolean hungerBlocked, boolean justHealed, float currentHealth, float maxHealth, int maxRegenHealthPercent) {
+    public void applyPacket(long outOfCombatTicks, int damageCooldownTicks, boolean regenActive, boolean hungerBlocked, boolean justHealed, float currentHealth, float maxHealth, int maxRegenHealthPercent, boolean saturationBonus, boolean poisoned, boolean withered) {
         this.outOfCombatTicks = outOfCombatTicks;
         this.damageCooldownTicks = damageCooldownTicks;
         this.regenActive = regenActive;
         this.hungerBlocked = hungerBlocked;
         this.justHealed = justHealed;
+        this.saturationBonus = saturationBonus;
+        this.poisoned = poisoned;
+        this.withered = withered;
         this.packetReceivedAtMs = System.currentTimeMillis();
         if (justHealed) {
             this.lastHealFlashAtMs = this.packetReceivedAtMs;
@@ -48,7 +54,6 @@ public final class RegenHudState {
         this.maxHealth = maxHealth;
         this.maxRegenHealthPercent = maxRegenHealthPercent;
 
-        // Sparkle: fires once when a regen heal tops HP to max
         boolean wasAtMax = prevHealthWasAtMax;
         boolean nowAtMax = maxHealth > 0.0F && currentHealth >= maxHealth;
         if (justHealed && !wasAtMax && nowAtMax) {
@@ -132,13 +137,23 @@ public final class RegenHudState {
         return hungerBlocked;
     }
 
-    /** True when HP fill is below the critical threshold and health is greater than zero. */
+    public boolean isSaturationBonus() {
+        return saturationBonus;
+    }
+
+    public boolean isPoisoned() {
+        return poisoned;
+    }
+
+    public boolean isWithered() {
+        return withered;
+    }
+
     public boolean isCriticalHealth() {
         float fill = getHealthFillProgress();
         return maxHealth > 0.0F && fill > 0.0F && fill < CRITICAL_THRESHOLD;
     }
 
-    /** 0→1 alpha for the sparkle animation; 0 when not active. */
     public float getSparkleAlpha() {
         if (lastSparkleAtMs <= 0L) return 0.0F;
         long elapsed = System.currentTimeMillis() - lastSparkleAtMs;
@@ -146,7 +161,6 @@ public final class RegenHudState {
         return 1.0F - elapsed / (float) SPARKLE_MS;
     }
 
-    /** 0→1 progress through the sparkle animation; 0 when not active. */
     public float getSparkleProgress() {
         if (lastSparkleAtMs <= 0L) return 0.0F;
         long elapsed = System.currentTimeMillis() - lastSparkleAtMs;
@@ -158,7 +172,7 @@ public final class RegenHudState {
         long elapsed = System.currentTimeMillis() - lastHealFlashAtMs;
         if (elapsed >= HEAL_THUMP_MS) return 1.0F;
         float progress = elapsed / (float) HEAL_THUMP_MS;
-        // Peaks at 1.08x immediately, eases out with quadratic decay
+
         return 1.0F + 0.08F * (1.0F - progress * progress);
     }
 
@@ -202,7 +216,7 @@ public final class RegenHudState {
 
     public float getGlowPhaseSeconds() {
         if (lastHealFlashAtMs <= 0L) {
-            // No heal yet  -- free-running phase from session start
+
             return System.currentTimeMillis() / 1000.0F;
         }
         long glowStartMs = lastHealFlashAtMs + HEAL_FLASH_MS + POST_FLASH_GLOW_DELAY_MS;
@@ -228,6 +242,9 @@ public final class RegenHudState {
         regenActive = false;
         hungerBlocked = false;
         justHealed = false;
+        saturationBonus = false;
+        poisoned = false;
+        withered = false;
         currentHealth = 0.0F;
         maxHealth = 0.0F;
         maxRegenHealthPercent = 100;

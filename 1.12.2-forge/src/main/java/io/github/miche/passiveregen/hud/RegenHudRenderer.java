@@ -51,34 +51,40 @@ public final class RegenHudRenderer extends Gui {
         ScaledResolution resolution = event.getResolution();
         int[] pos = HudPositionPreset.calculate(config, resolution.getScaledWidth(), resolution.getScaledHeight(), config.showTimer, timerWidth, scale);
 
-        // Wall-clock time in seconds for time-based animations
         float t = System.currentTimeMillis() / 1000.0F;
 
-        boolean hungerBlocked = state.isHungerBlocked();
-        // Critical HP: <20% fill, not hunger-blocked (hunger takes visual priority)
-        boolean critical = !hungerBlocked && state.isCriticalHealth();
-        float progress = state.isRegenActive() ? 1.0F : state.getCooldownProgress();
-        int tint = hungerBlocked ? config.getHungerBlockedArgb() : config.getHudArgb();
+        boolean withered = config.hudWitherEffectEnabled && state.isWithered();
+        boolean poisoned = !withered && config.hudPoisonEffectEnabled && state.isPoisoned();
+        boolean hungerBlocked = state.isHungerBlocked() && !withered && !poisoned;
+        boolean saturationBonus = !withered && !poisoned && !hungerBlocked && config.hudSaturationSheenEnabled && state.isSaturationBonus();
+        boolean critical = !hungerBlocked && !withered && !poisoned && state.isCriticalHealth();
+        float progress = (state.isRegenActive() || withered || poisoned) ? 1.0F : state.getCooldownProgress();
+        int tint;
+        if (withered) {
+            tint = 0xFF1A121A;
+        } else if (poisoned) {
+            tint = 0xFF4E9A2A;
+        } else if (hungerBlocked) {
+            tint = config.getHungerBlockedArgb();
+        } else {
+            tint = config.getHudArgb();
+        }
 
         GlStateManager.pushMatrix();
         GlStateManager.enableBlend();
         GlStateManager.translate(pos[0], pos[1], 0.0F);
         GlStateManager.scale(scale, scale, 1.0F);
 
-        // Critical HP: micro-shake  -- two independent sine waves per axis
         if (critical) {
             float shakeX = (float) (Math.sin(t * 25.0) * 0.6 + Math.sin(t * 41.0) * 0.3);
             float shakeY = (float) (Math.sin(t * 29.0) * 0.5 + Math.sin(t * 37.0) * 0.2);
             GlStateManager.translate(shakeX, shakeY, 0.0F);
         }
 
-        // ---- Heart body (with optional droop for hunger) ----
-
         if (hungerBlocked) {
-            // Droop: slight counter-clockwise tilt around heart center  -- reads as "heavy/sad"
             GlStateManager.pushMatrix();
             GlStateManager.translate(8.0F, 8.0F, 0.0F);
-            GlStateManager.rotate(-3.0F, 0.0F, 0.0F, 1.0F); // -3 degrees around Z
+            GlStateManager.rotate(-3.0F, 0.0F, 0.0F, 1.0F);
             GlStateManager.translate(-8.0F, -8.0F, 0.0F);
         }
 
@@ -98,23 +104,30 @@ public final class RegenHudRenderer extends Gui {
             GlStateManager.popMatrix();
         }
 
-        // ---- Glow layer ----
-
         float flashAlpha = state.getHealFlashAlpha();
         boolean glowSuppressed = state.isGlowSuppressed();
 
-        if (critical) {
-            // Critical alarm: tight fast-pulsing red, always visible
+        if (withered) {
+            float witherPulse = 0.14F + 0.08F * (0.5F + 0.5F * (float) Math.sin(t * 1.6F));
+            drawGlow(client, witherPulse, 0xFF501050, opacity, 1.35F);
+            drawGlow(client, witherPulse * 0.5F, 0xFF200820, opacity, 1.12F);
+        } else if (poisoned) {
+            float poisonPulse = 0.14F + 0.08F * (0.5F + 0.5F * (float) Math.sin(t * 1.1F));
+            drawGlow(client, poisonPulse, 0xFF5FD43B, opacity, 1.30F);
+            drawGlow(client, poisonPulse * 0.5F, 0xFF2C6A18, opacity, 1.10F);
+        } else if (critical) {
             float critPulse = 0.18F + 0.18F * (0.5F + 0.5F * (float) Math.sin(t * 4.2F));
             drawGlow(client, critPulse * 1.2F, 0xFFFF3232, opacity, 1.10F);
             drawGlow(client, critPulse * 0.75F, 0xFFDC1414, opacity, 1.28F);
         } else if (hungerBlocked) {
-            // Hunger alarm: slow dim red glow (distinct from the orange fill)
             float hungerPulse = 0.03F + 0.06F * (0.5F + 0.5F * (float) Math.sin(t * 0.9F));
             drawGlow(client, hungerPulse * 1.4F, 0xFFDC2828, opacity, 1.15F);
             drawGlow(client, hungerPulse * 0.9F, 0xFFB41414, opacity, 1.35F);
+        } else if (saturationBonus && flashAlpha <= 0.0F) {
+            float goldPulse = 0.05F + 0.12F * (0.5F + 0.5F * (float) Math.sin(t * 2.0F));
+            drawGlow(client, goldPulse, 0xFFFFC24A, opacity, 1.18F);
+            drawGlow(client, goldPulse * 0.5F, 0xFFB88300, opacity, 1.32F);
         } else if (flashAlpha <= 0.0F && !glowSuppressed && state.isRegenActive()) {
-            // Normal regen: soft pink multi-sine breathing
             float glowT = state.getGlowPhaseSeconds();
             float pulse;
             if (config.hudRichAnimations) {
@@ -133,7 +146,6 @@ public final class RegenHudRenderer extends Gui {
             drawHealFlash(client, flashAlpha, opacity);
         }
 
-        // Sparkle: fires once when regen tops HP to max
         drawSparkle(state, opacity);
 
         if (config.showTimer && !timerText.isEmpty()) {
@@ -143,8 +155,6 @@ public final class RegenHudRenderer extends Gui {
 
         GlStateManager.popMatrix();
     }
-
-    // ---- Draw methods ----
 
     private void drawHeart(Minecraft client, float progress, int tint, float opacity, float fillOpacity) {
         client.getTextureManager().bindTexture(HEART_TEXTURE);
@@ -195,17 +205,12 @@ public final class RegenHudRenderer extends Gui {
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    // ---- Sparkle (full-regen completion) ----
-    // Eight warm-white rays radiate outward from heart center, growing and fading.
-    // Uses GL rotation so each 1×N rect draws as a thin rotated strip.
-    // Gui.drawRect handles its own texture/blend state per call.
-
     private void drawSparkle(RegenHudState state, float opacity) {
         float alpha = state.getSparkleAlpha() * opacity;
         if (alpha <= 0.0F) return;
         float progress = state.getSparkleProgress();
-        float ease   = 1.0F - (1.0F - progress) * (1.0F - progress); // ease-out
-        float innerR = 2.2F + ease * 2.2F;  // in 16 px units
+        float ease   = 1.0F - (1.0F - progress) * (1.0F - progress);
+        float innerR = 2.2F + ease * 2.2F;
         float outerR = innerR + 0.8F + ease * 0.5F;
 
         int lineAlpha = (int) (alpha * 0.9F * 255);
@@ -216,19 +221,17 @@ public final class RegenHudRenderer extends Gui {
             GlStateManager.pushMatrix();
             GlStateManager.translate(8.0F, 8.0F, 0.0F);
             GlStateManager.rotate((float) Math.toDegrees(angle), 0.0F, 0.0F, 1.0F);
-            GlStateManager.translate(-0.5F, 0.0F, 0.0F); // center the 1 px strip
-            // Warm cream line: (lineAlpha, 0xFF, 0xF0, 0xC8) packed as ARGB
+            GlStateManager.translate(-0.5F, 0.0F, 0.0F);
+
             Gui.drawRect(0, (int) innerR, 1, (int) Math.ceil(outerR),
                     (lineAlpha << 24) | (0xFF << 16) | (0xF0 << 8) | 0xC8);
-            // White tip dot
+
             Gui.drawRect(0, (int) Math.ceil(outerR), 1, (int) Math.ceil(outerR) + 1,
                     (dotAlpha << 24) | 0xFFFFFF);
             GlStateManager.popMatrix();
         }
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     }
-
-    // ---- Timer ----
 
     private static void drawTimer(FontRenderer font, String text, int x, int y, int argb) {
         GlStateManager.pushMatrix();
@@ -238,15 +241,13 @@ public final class RegenHudRenderer extends Gui {
         GlStateManager.popMatrix();
     }
 
-    // ---- Visibility check ----
-
     private static boolean shouldRender(RegenHudConfig config, RegenHudState state) {
         if (config == null || !config.showRegenHud) {
             return false;
         }
 
         boolean fullHealth = state.getMaxHealth() > 0.0F && state.getCurrentHealth() >= state.getMaxHealth();
-        if (config.hideAtFullHealth && fullHealth && !state.isRegenActive() && state.isReady()) {
+        if (config.hideAtFullHealth && fullHealth && !state.isRegenActive() && state.isReady() && !state.isPoisoned() && !state.isWithered()) {
             return false;
         }
 
@@ -255,10 +256,10 @@ public final class RegenHudRenderer extends Gui {
             case "always":
                 return true;
             case "out_of_combat":
-                return state.isCooldownCounting() || state.isRegenActive() || state.isHungerBlocked() || state.getCurrentHealth() < state.getMaxHealth();
+                return state.isCooldownCounting() || state.isRegenActive() || state.isHungerBlocked() || state.isPoisoned() || state.isWithered() || state.getCurrentHealth() < state.getMaxHealth();
             case "injured":
             default:
-                return state.getCurrentHealth() < state.getMaxHealth() || state.isRegenActive() || state.isHungerBlocked();
+                return state.getCurrentHealth() < state.getMaxHealth() || state.isRegenActive() || state.isHungerBlocked() || state.isPoisoned() || state.isWithered();
         }
     }
 

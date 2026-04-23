@@ -12,6 +12,9 @@
   "entrypoints": {
     "main": [
       "io.github.miche.passiveregen.PassiveRegenMod"
+    ],
+    "client": [
+      "io.github.miche.passiveregen.client.PassiveRegenClientMod"
     ]
   },
   "depends": {

@@ -2,10 +2,16 @@ package io.github.miche.passiveregen.client;
 
 public final class RegenHudState {
     private static final RegenHudState INSTANCE = new RegenHudState();
+    private static final long HEAL_FLASH_MS = 140L;
+    private static final long HEAL_THUMP_MS = 120L;
+    private static final long POST_FLASH_GLOW_DELAY_MS = 350L;
+    private static final long SPARKLE_MS = 520L;
+    private static final float CRITICAL_THRESHOLD = 0.20F;
 
     private long outOfCombatTicks;
     private int damageCooldownTicks;
     private boolean regenActive;
+    private boolean hungerBlocked;
     private boolean justHealed;
     private float currentHealth;
     private float maxHealth;
@@ -15,6 +21,15 @@ public final class RegenHudState {
     private float visualHealth;
     private float previousVisualHealth;
     private long visualHealthStartMs;
+    private long lastHealFlashAtMs;
+    private boolean nearCampfire;
+    private boolean saturationBonus;
+    private boolean poisoned;
+    private boolean withered;
+    private float hudFadeAlpha = 0.0F;
+    private long lastFadeUpdateMs = 0L;
+    private long lastSparkleAtMs;
+    private boolean prevHealthWasAtMax = true;
     private static final long VISUAL_HEALTH_LERP_MS = 200L;
 
     private RegenHudState() {
@@ -24,14 +39,29 @@ public final class RegenHudState {
         return INSTANCE;
     }
 
-    public void applyPacket(long outOfCombatTicks, int damageCooldownTicks, boolean regenActive, boolean justHealed, float currentHealth, float maxHealth, int maxRegenHealthPercent) {
+    public void applyPacket(long outOfCombatTicks, int damageCooldownTicks, boolean regenActive, boolean hungerBlocked, boolean justHealed, float currentHealth, float maxHealth, int maxRegenHealthPercent, boolean nearCampfire, boolean saturationBonus, boolean poisoned, boolean withered) {
         this.outOfCombatTicks = outOfCombatTicks;
         this.damageCooldownTicks = damageCooldownTicks;
         this.regenActive = regenActive;
+        this.hungerBlocked = hungerBlocked;
         this.justHealed = justHealed;
+        this.nearCampfire = nearCampfire;
+        this.saturationBonus = saturationBonus;
+        this.poisoned = poisoned;
+        this.withered = withered;
         this.packetReceivedAtMs = System.currentTimeMillis();
+        if (justHealed) {
+            this.lastHealFlashAtMs = this.packetReceivedAtMs;
+        }
         this.maxHealth = maxHealth;
         this.maxRegenHealthPercent = maxRegenHealthPercent;
+
+        boolean wasAtMax = prevHealthWasAtMax;
+        boolean nowAtMax = maxHealth > 0.0F && currentHealth >= maxHealth;
+        if (justHealed && !wasAtMax && nowAtMax) {
+            this.lastSparkleAtMs = this.packetReceivedAtMs;
+        }
+        prevHealthWasAtMax = nowAtMax;
 
         if (this.visualHealth == 0.0F && maxHealth > 0.0F) {
             this.visualHealth = currentHealth;
@@ -95,6 +125,100 @@ public final class RegenHudState {
         return regenActive;
     }
 
+    public boolean isHungerBlocked() {
+        return hungerBlocked;
+    }
+
+    public boolean isNearCampfire() {
+        return nearCampfire;
+    }
+
+    public boolean isSaturationBonus() {
+        return saturationBonus;
+    }
+
+    public boolean isPoisoned() {
+        return poisoned;
+    }
+
+    public boolean isWithered() {
+        return withered;
+    }
+
+    public boolean isCriticalHealth() {
+        float fill = getHealthFillProgress();
+        return maxHealth > 0.0F && fill > 0.0F && fill < CRITICAL_THRESHOLD;
+    }
+
+    public float getSparkleAlpha() {
+        if (lastSparkleAtMs <= 0L) return 0.0F;
+        long elapsed = System.currentTimeMillis() - lastSparkleAtMs;
+        if (elapsed >= SPARKLE_MS) return 0.0F;
+        return 1.0F - elapsed / (float) SPARKLE_MS;
+    }
+
+    public float getSparkleProgress() {
+        if (lastSparkleAtMs <= 0L) return 0.0F;
+        long elapsed = System.currentTimeMillis() - lastSparkleAtMs;
+        return Math.min(1.0F, elapsed / (float) SPARKLE_MS);
+    }
+
+    public float getHealThumpScale() {
+        if (lastHealFlashAtMs <= 0L) return 1.0F;
+        long elapsed = System.currentTimeMillis() - lastHealFlashAtMs;
+        if (elapsed >= HEAL_THUMP_MS) return 1.0F;
+        float progress = elapsed / (float) HEAL_THUMP_MS;
+        return 1.0F + 0.08F * (1.0F - progress * progress);
+    }
+
+    public float getHealFlashAlpha() {
+        if (lastHealFlashAtMs <= 0L) {
+            return 0.0F;
+        }
+
+        long elapsed = Math.max(0L, System.currentTimeMillis() - lastHealFlashAtMs);
+        if (elapsed >= HEAL_FLASH_MS) {
+            return 0.0F;
+        }
+
+        float progress = elapsed / (float) HEAL_FLASH_MS;
+        return 0.95F * (1.0F - progress);
+    }
+
+    public float updateAndGetFadeAlpha(boolean visible, int fadeInMs, int fadeOutMs) {
+        long now = System.currentTimeMillis();
+        float deltaSec = lastFadeUpdateMs > 0L ? (now - lastFadeUpdateMs) / 1000.0F : 0.0F;
+        lastFadeUpdateMs = now;
+
+        float target = visible ? 1.0F : 0.0F;
+        if (hudFadeAlpha == target) return hudFadeAlpha;
+
+        if (visible) {
+            float rate = fadeInMs > 0 ? deltaSec / (fadeInMs / 1000.0F) : 1.0F;
+            hudFadeAlpha = Math.min(1.0F, hudFadeAlpha + rate);
+        } else {
+            float rate = fadeOutMs > 0 ? deltaSec / (fadeOutMs / 1000.0F) : 1.0F;
+            hudFadeAlpha = Math.max(0.0F, hudFadeAlpha - rate);
+        }
+        return hudFadeAlpha;
+    }
+
+    public boolean isGlowSuppressed() {
+        if (lastHealFlashAtMs <= 0L) return false;
+        long elapsed = System.currentTimeMillis() - lastHealFlashAtMs;
+        return elapsed < HEAL_FLASH_MS + POST_FLASH_GLOW_DELAY_MS;
+    }
+
+    public float getGlowPhaseSeconds() {
+        if (lastHealFlashAtMs <= 0L) {
+            return System.currentTimeMillis() / 1000.0F;
+        }
+
+        long glowStartMs = lastHealFlashAtMs + HEAL_FLASH_MS + POST_FLASH_GLOW_DELAY_MS;
+        long elapsed = System.currentTimeMillis() - glowStartMs;
+        return Math.max(0L, elapsed) / 1000.0F;
+    }
+
     public boolean isReady() {
         return damageCooldownTicks <= 0 || getCooldownProgress() >= 1.0F;
     }
@@ -111,6 +235,7 @@ public final class RegenHudState {
         outOfCombatTicks = 0L;
         damageCooldownTicks = 0;
         regenActive = false;
+        hungerBlocked = false;
         justHealed = false;
         currentHealth = 0.0F;
         maxHealth = 0.0F;
@@ -119,5 +244,14 @@ public final class RegenHudState {
         visualHealth = 0.0F;
         previousVisualHealth = 0.0F;
         visualHealthStartMs = 0L;
+        lastHealFlashAtMs = 0L;
+        nearCampfire = false;
+        saturationBonus = false;
+        poisoned = false;
+        withered = false;
+        hudFadeAlpha = 0.0F;
+        lastFadeUpdateMs = 0L;
+        lastSparkleAtMs = 0L;
+        prevHealthWasAtMax = true;
     }
 }

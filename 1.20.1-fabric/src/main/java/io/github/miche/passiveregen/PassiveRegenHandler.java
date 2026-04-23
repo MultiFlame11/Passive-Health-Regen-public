@@ -5,8 +5,10 @@ import io.github.miche.passiveregen.api.PassiveRegenAPI;
 import io.github.miche.passiveregen.network.RegenHudPacket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -19,6 +21,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.level.LightLayer;
@@ -34,6 +37,9 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
     private final Map<UUID, HudSyncState> lastHudStates = new HashMap<>();
     private final Map<UUID, Boolean> campfireCache = new HashMap<>();
     private final Map<UUID, Long> campfireNextCheckTick = new HashMap<>();
+    private final Set<UUID> campfireCooldownApplied = new HashSet<>();
+    private final Set<UUID> saturationBonusActive = new HashSet<>();
+    private final Map<UUID, Float> frozenMaxDuringCooldown = new HashMap<>();
     private PassiveRegenConfig storedConfig;
     private MinecraftServer currentServer;
     static volatile long serverTick = 0L;
@@ -163,6 +169,8 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
         UUID playerId = player.getUUID();
         lastDamageTicks.put(playerId, now);
         cooldownDurations.put(playerId, cooldownTicks);
+        frozenMaxDuringCooldown.remove(playerId);
+        campfireCooldownApplied.remove(playerId);
         setSavedCooldownState(player, 0L, cooldownTicks);
     }
 
@@ -226,17 +234,61 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
             }
 
             if (outOfCombatTicks < cooldownDuration) {
-                syncHudState(player, outOfCombatTicks, cooldownDuration, false, false, false, config.maxRegenHealthPercent);
-                continue;
+                if (config.campfireRegenEnabled
+                        && config.campfireCooldownReductionEnabled
+                        && config.campfireCooldownReductionPercent > 0
+                        && !campfireCooldownApplied.contains(playerId)
+                        && isNearCampfireCached(player)) {
+                    campfireCooldownApplied.add(playerId);
+                    reduceCooldown(playerId, config.campfireCooldownReductionPercent);
+                    outOfCombatTicks = getOutOfCombatTicks(playerId, now);
+                    cooldownDuration = getCooldownDuration(playerId, player);
+                }
+                if (outOfCombatTicks < cooldownDuration) {
+                    syncHudState(player, outOfCombatTicks, cooldownDuration, false, false, false, config.maxRegenHealthPercent);
+                    continue;
+                }
             }
 
             float healAmount = computeHealAmount(player, outOfCombatTicks);
             boolean regenActive = healAmount > 0.0F;
 
             if (healAmount > 0.0F) {
+                float beforeHp = player.getHealth();
                 player.heal(healAmount);
+                float actualHealed = Math.max(0.0F, player.getHealth() - beforeHp);
+
+                if (actualHealed > 0.0F
+                        && config.saturationBonusEnabled
+                        && config.saturationBonusCostPerHp > 0.0D
+                        && (config.saturationBonusHealMultiplier > 1.0D || config.saturationBonusSpeedMultiplier > 1.0D)
+                        && saturationBonusActive.contains(playerId)) {
+                    float currentSat = player.getFoodData().getSaturationLevel();
+                    float floor = (float) config.saturationBonusMinSaturationFloor;
+                    float headroom = Math.max(0.0F, currentSat - floor);
+                    float rawCost = actualHealed * (float) config.saturationBonusCostPerHp;
+                    float chargedCost = Math.min(rawCost, headroom);
+                    if (chargedCost > 0.0F) {
+
+                        player.causeFoodExhaustion(chargedCost * 4.0F);
+                    }
+                }
+
                 justHealed = true;
                 regenActive = true;
+            }
+
+            if (config.saturationBonusEnabled
+                    && config.saturationBonusIdleDrainPerTick > 0.0D
+                    && (config.saturationBonusHealMultiplier > 1.0D || config.saturationBonusSpeedMultiplier > 1.0D)
+                    && saturationBonusActive.contains(playerId)) {
+                float currentSat = player.getFoodData().getSaturationLevel();
+                float floor = (float) config.saturationBonusMinSaturationFloor;
+                float headroom = Math.max(0.0F, currentSat - floor);
+                float idleCost = Math.min((float) config.saturationBonusIdleDrainPerTick, headroom);
+                if (idleCost > 0.0F) {
+                    player.causeFoodExhaustion(idleCost * 4.0F);
+                }
             }
 
             syncHudState(player, outOfCombatTicks, cooldownDuration, regenActive, hungerBlocked, justHealed, config.maxRegenHealthPercent);
@@ -264,6 +316,9 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
         cooldownDurations.remove(playerId);
         campfireCache.remove(playerId);
         campfireNextCheckTick.remove(playerId);
+        frozenMaxDuringCooldown.remove(playerId);
+        campfireCooldownApplied.remove(playerId);
+        saturationBonusActive.remove(playerId);
     }
 
     public void onPlayerLogin(ServerPlayer player) {
@@ -298,6 +353,9 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
         activePenalties.remove(playerId);
         hungerOverrides.remove(playerId);
         lastHudStates.remove(playerId);
+        frozenMaxDuringCooldown.remove(playerId);
+        campfireCooldownApplied.remove(playerId);
+        saturationBonusActive.remove(playerId);
         clearSavedCooldownState(player);
         syncHudState(player, 0L, 0, false, false, false, storedConfig != null ? storedConfig.maxRegenHealthPercent : 100);
     }
@@ -309,10 +367,26 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
 
         UUID playerId = player.getUUID();
         int foodLevel = player.getFoodData().getFoodLevel();
+        float freezeProgress = getFreezingProgress(player);
+
         int cooldownDuration = getCooldownDuration(playerId, player);
+        if (freezeProgress > 0.0F && outOfCombatTicks < cooldownDuration) {
+            Float prev = frozenMaxDuringCooldown.get(playerId);
+            if (prev == null || freezeProgress > prev) {
+                frozenMaxDuringCooldown.put(playerId, freezeProgress);
+            }
+        }
+        Float stickyProgress = frozenMaxDuringCooldown.get(playerId);
+        if (stickyProgress != null
+                && storedConfig.freezingPenaltyEnabled
+                && storedConfig.freezingCooldownMultiplier > 1.0D) {
+            double cdMult = 1.0D + (storedConfig.freezingCooldownMultiplier - 1.0D) * stickyProgress;
+            cooldownDuration = (int) Math.ceil(cooldownDuration * cdMult);
+        }
         if (outOfCombatTicks < cooldownDuration) {
             return 0.0F;
         }
+        frozenMaxDuringCooldown.remove(playerId);
 
         boolean hungerPenalized = !isHungerOverrideActive(playerId)
             && storedConfig.hungerPenaltyEnabled
@@ -320,21 +394,76 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
                 || (storedConfig.minimumSaturationLevel > 0.0D
                     && player.getFoodData().getSaturationLevel() < storedConfig.minimumSaturationLevel));
 
+        if (freezeProgress >= 1.0F && storedConfig.freezingBlocksRegen) {
+            return 0.0F;
+        }
+
+        if (storedConfig.disableHealingDuringWither && player.hasEffect(MobEffects.WITHER)) {
+            return 0.0F;
+        }
+        if (storedConfig.disableHealingDuringPoison && player.hasEffect(MobEffects.POISON)) {
+            return 0.0F;
+        }
+
         double healAmount = Math.max(0.01D, storedConfig.healAmountPerTrigger);
         double scaledHeal = healAmount * getMaxHealthScaleMultiplier(player.getMaxHealth());
         double healBonusMultiplier = storedConfig.combineBonusMultipliers(getHealBonusMultipliers(player, foodLevel, hungerPenalized));
         double speedBonusMultiplier = storedConfig.combineBonusMultipliers(getSpeedBonusMultipliers(player, foodLevel, hungerPenalized));
 
+        if (freezeProgress > 0.0F && storedConfig.freezingPenaltyEnabled) {
+            double healMult = 1.0D + (Math.max(0.01D, storedConfig.freezingHealMultiplier) - 1.0D) * freezeProgress;
+            double speedMult = 1.0D + (Math.max(0.01D, storedConfig.freezingSpeedMultiplier) - 1.0D) * freezeProgress;
+            healBonusMultiplier *= Math.max(0.01D, healMult);
+            speedBonusMultiplier *= Math.max(0.01D, speedMult);
+        }
+
+        double perTriggerHeal = scaledHeal * healBonusMultiplier;
+        if (storedConfig.saturationBonusFlatHealBonus > 0.0D) {
+            double satStrengthFlat = getSaturationBonusStrength(player);
+            if (satStrengthFlat > 0.0D) {
+                perTriggerHeal += storedConfig.saturationBonusFlatHealBonus * satStrengthFlat;
+            }
+        }
+
         int updateTicks = Math.max(1, storedConfig.updateIntervalTicks);
         double currentHealInterval = getCurrentHealIntervalTicks(outOfCombatTicks) / Math.max(0.0001D, speedBonusMultiplier);
-        double finalHeal = scaledHeal * healBonusMultiplier * updateTicks / currentHealInterval;
+        double finalHeal = perTriggerHeal * updateTicks / currentHealInterval;
         finalHeal *= getTemporaryRateMultiplier(playerId, player.serverLevel().getGameTime());
         return (float)Math.max(0.0D, finalHeal);
     }
 
+    private double getSaturationBonusStrength(ServerPlayer player) {
+        if (!isSaturationBonusActive(player)) return 0.0D;
+        if (!storedConfig.saturationBonusScaleByExcess) return 1.0D;
+        double sat = player.getFoodData().getSaturationLevel();
+        double threshold = storedConfig.saturationBonusThreshold;
+        double range = Math.max(0.01D, 20.0D - threshold);
+        return Math.max(0.0D, Math.min(1.0D, (sat - threshold) / range));
+    }
+
+    private boolean isSaturationBonusActive(ServerPlayer player) {
+        if (storedConfig == null || !storedConfig.saturationBonusEnabled) {
+            saturationBonusActive.remove(player.getUUID());
+            return false;
+        }
+        float sat = player.getFoodData().getSaturationLevel();
+        UUID id = player.getUUID();
+        boolean wasActive = saturationBonusActive.contains(id);
+        boolean active;
+        if (sat >= (float) storedConfig.saturationBonusThreshold) {
+            active = true;
+        } else if (wasActive && sat >= (float) storedConfig.saturationBonusDeactivateThreshold) {
+            active = true;
+        } else {
+            active = false;
+        }
+        if (active) saturationBonusActive.add(id);
+        else saturationBonusActive.remove(id);
+        return active;
+    }
+
     private List<Double> getHealBonusMultipliers(ServerPlayer player, int foodLevel, boolean hungerPenalized) {
         List<Double> multipliers = new ArrayList<>();
-        float saturationLevel = player.getFoodData().getSaturationLevel();
 
         if (hungerPenalized) {
             multipliers.add(Math.max(0.01D, storedConfig.hungerPenaltyHealMultiplier));
@@ -343,14 +472,20 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
             if (hungerHeal != 1.0D) multipliers.add(hungerHeal);
         }
 
-        if (storedConfig.saturationBonusEnabled
-                && saturationLevel >= storedConfig.saturationBonusThreshold
-                && storedConfig.saturationBonusHealMultiplier != 1.0D) {
-            multipliers.add(Math.max(1.0D, storedConfig.saturationBonusHealMultiplier));
+        double satStrength = getSaturationBonusStrength(player);
+        if (satStrength > 0.0D && storedConfig.saturationBonusHealMultiplier != 1.0D) {
+            double rawMult = Math.max(1.0D, storedConfig.saturationBonusHealMultiplier);
+
+            double effective = 1.0D + (rawMult - 1.0D) * satStrength;
+            multipliers.add(effective);
         }
 
         if (storedConfig.crouchBonusEnabled && player.isShiftKeyDown() && storedConfig.crouchHealMultiplier != 1.0D) {
             multipliers.add(Math.max(1.0D, storedConfig.crouchHealMultiplier));
+        }
+
+        if (storedConfig.campfireRegenEnabled && storedConfig.campfireHealMultiplier != 1.0D && isNearCampfireCached(player)) {
+            multipliers.add(Math.max(1.0D, storedConfig.campfireHealMultiplier));
         }
 
         double sharedBonus = getSharedEnvironmentalMultiplier(player);
@@ -361,7 +496,6 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
 
     private List<Double> getSpeedBonusMultipliers(ServerPlayer player, int foodLevel, boolean hungerPenalized) {
         List<Double> multipliers = new ArrayList<>();
-        float saturationLevel = player.getFoodData().getSaturationLevel();
 
         if (hungerPenalized) {
             multipliers.add(Math.max(0.01D, storedConfig.hungerPenaltySpeedMultiplier));
@@ -370,20 +504,53 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
             if (hungerSpeed != 1.0D) multipliers.add(hungerSpeed);
         }
 
-        if (storedConfig.saturationBonusEnabled
-                && saturationLevel >= storedConfig.saturationBonusThreshold
-                && storedConfig.saturationBonusSpeedMultiplier != 1.0D) {
-            multipliers.add(Math.max(1.0D, storedConfig.saturationBonusSpeedMultiplier));
+        double satStrengthSpeed = getSaturationBonusStrength(player);
+        if (satStrengthSpeed > 0.0D && storedConfig.saturationBonusSpeedMultiplier != 1.0D) {
+            double rawMult = Math.max(1.0D, storedConfig.saturationBonusSpeedMultiplier);
+            double effective = 1.0D + (rawMult - 1.0D) * satStrengthSpeed;
+            multipliers.add(effective);
         }
 
         if (storedConfig.crouchBonusEnabled && player.isShiftKeyDown() && storedConfig.crouchSpeedMultiplier != 1.0D) {
             multipliers.add(Math.max(1.0D, storedConfig.crouchSpeedMultiplier));
         }
 
+        if (storedConfig.campfireRegenEnabled && storedConfig.campfireSpeedMultiplier != 1.0D && isNearCampfireCached(player)) {
+            multipliers.add(Math.max(1.0D, storedConfig.campfireSpeedMultiplier));
+        }
+
         double sharedBonus = getSharedEnvironmentalMultiplier(player);
         if (sharedBonus != 1.0D) multipliers.add(sharedBonus);
 
         return multipliers;
+    }
+
+    private float getFreezingProgress(ServerPlayer player) {
+        if (storedConfig == null || !storedConfig.freezingPenaltyEnabled) return 0.0F;
+        int required = player.getTicksRequiredToFreeze();
+        if (required <= 0) return 0.0F;
+        float frozenPct = (float) player.getTicksFrozen() / (float) required;
+        float threshold = (float) storedConfig.freezingPenaltyThresholdPercent;
+        if (frozenPct <= threshold) return 0.0F;
+        if (threshold >= 1.0F) return frozenPct >= 1.0F ? 1.0F : 0.0F;
+        float progress = (frozenPct - threshold) / (1.0F - threshold);
+        if (progress < 0.0F) return 0.0F;
+        if (progress > 1.0F) return 1.0F;
+        return progress;
+    }
+
+    private boolean isNearCampfireCached(ServerPlayer player) {
+        UUID id = player.getUUID();
+        long now = player.serverLevel().getGameTime();
+        Long nextCheck = campfireNextCheckTick.get(id);
+        if (nextCheck == null || now >= nextCheck) {
+            boolean result = isNearCampfire(player, storedConfig.campfireRadius);
+            campfireCache.put(id, result);
+            campfireNextCheckTick.put(id, now + 40L);
+            return result;
+        }
+        Boolean cached = campfireCache.get(id);
+        return cached != null && cached;
     }
 
     private double getSharedEnvironmentalMultiplier(ServerPlayer player) {
@@ -590,8 +757,6 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
     }
 
     private void syncPersistedCooldownState(ServerPlayer player, Long lastDamageTick, long outOfCombatTicks) {
-        // 1.20.1 Fabric persists reconnect state on disconnect/login through the
-        // world save file store below instead of writing every server tick.
     }
 
     private void restoreCooldownStateAfterReconnect(ServerPlayer player) {
@@ -626,16 +791,19 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
             if (nextCheck == null || now >= nextCheck) {
                 nearCampfire = isNearCampfire(player, storedConfig.campfireRadius);
                 campfireCache.put(playerId, nearCampfire);
-                campfireNextCheckTick.put(playerId, now + 40L); // re-check every 2 seconds
+                campfireNextCheckTick.put(playerId, now + 40L);
             } else {
                 Boolean cached = campfireCache.get(playerId);
                 nearCampfire = cached != null && cached;
             }
         }
-        HudSyncState current = new HudSyncState(outOfCombatTicks, damageCooldownTicks, regenActive, hungerBlocked, nearCampfire, player.getHealth(), player.getMaxHealth(), maxRegenHealthPercent);
+        boolean saturationBonus = isSaturationBonusActive(player);
+        boolean poisoned = player.hasEffect(MobEffects.POISON);
+        boolean withered = player.hasEffect(MobEffects.WITHER);
+        HudSyncState current = new HudSyncState(outOfCombatTicks, damageCooldownTicks, regenActive, hungerBlocked, nearCampfire, player.getHealth(), player.getMaxHealth(), maxRegenHealthPercent, saturationBonus, poisoned, withered);
         HudSyncState previous = lastHudStates.get(playerId);
         if (justHealed || !current.equals(previous)) {
-            RegenHudPacket.send(player, outOfCombatTicks, damageCooldownTicks, regenActive, hungerBlocked, justHealed, player.getHealth(), player.getMaxHealth(), maxRegenHealthPercent, nearCampfire);
+            RegenHudPacket.send(player, outOfCombatTicks, damageCooldownTicks, regenActive, hungerBlocked, justHealed, player.getHealth(), player.getMaxHealth(), maxRegenHealthPercent, nearCampfire, saturationBonus, poisoned, withered);
             lastHudStates.put(playerId, current);
         }
     }
@@ -680,6 +848,6 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
     private record RegenPenalty(double multiplier, long expiresAt) {
     }
 
-    private record HudSyncState(long outOfCombatTicks, int damageCooldownTicks, boolean regenActive, boolean hungerBlocked, boolean nearCampfire, float health, float maxHealth, int maxRegenHealthPercent) {
+    private record HudSyncState(long outOfCombatTicks, int damageCooldownTicks, boolean regenActive, boolean hungerBlocked, boolean nearCampfire, float health, float maxHealth, int maxRegenHealthPercent, boolean saturationBonus, boolean poisoned, boolean withered) {
     }
 }

@@ -94,6 +94,47 @@ public final class PassiveRegenHudConfigScreen {
             .setSaveConsumer(value -> working.hudRichAnimations = value)
             .build());
 
+        hud.addEntry(entries.startBooleanToggle(Component.translatable("config.passiveregen.hud_freezing_enabled"), working.hudFreezingEnabled)
+            .setDefaultValue(true)
+            .setSaveConsumer(value -> working.hudFreezingEnabled = value)
+            .build());
+        hud.addEntry(entries.startDoubleField(Component.translatable("config.passiveregen.hud_freezing_threshold"), working.hudFreezingThresholdPercent)
+            .setDefaultValue(0.4D)
+            .setSaveConsumer(value -> working.hudFreezingThresholdPercent = value)
+            .build());
+        hud.addEntry(entries.startStrField(Component.translatable("config.passiveregen.hud_freezing_color"), working.hudFreezingColor)
+            .setDefaultValue("88DDFF")
+            .setSaveConsumer(value -> working.hudFreezingColor = value)
+            .build());
+        hud.addEntry(entries.startBooleanToggle(Component.translatable("config.passiveregen.hud_freezing_tint_enabled"), working.hudFreezingTintEnabled)
+            .setDefaultValue(true)
+            .setSaveConsumer(value -> working.hudFreezingTintEnabled = value)
+            .build());
+        hud.addEntry(entries.startBooleanToggle(Component.translatable("config.passiveregen.hud_freezing_frost_enabled"), working.hudFreezingFrostEnabled)
+            .setDefaultValue(true)
+            .setSaveConsumer(value -> working.hudFreezingFrostEnabled = value)
+            .build());
+        hud.addEntry(entries.startBooleanToggle(Component.translatable("config.passiveregen.hud_freezing_shake_enabled"), working.hudFreezingShakeEnabled)
+            .setDefaultValue(true)
+            .setSaveConsumer(value -> working.hudFreezingShakeEnabled = value)
+            .build());
+        hud.addEntry(entries.startDoubleField(Component.translatable("config.passiveregen.hud_freezing_shake_intensity"), working.hudFreezingShakeIntensity)
+            .setDefaultValue(0.2D)
+            .setSaveConsumer(value -> working.hudFreezingShakeIntensity = value)
+            .build());
+        hud.addEntry(entries.startDoubleField(Component.translatable("config.passiveregen.hud_freezing_shake_speed"), working.hudFreezingShakeSpeedHz)
+            .setDefaultValue(2.25D)
+            .setSaveConsumer(value -> working.hudFreezingShakeSpeedHz = value)
+            .build());
+        hud.addEntry(entries.startBooleanToggle(Component.translatable("config.passiveregen.hud_freezing_snow_enabled"), working.hudFreezingSnowEnabled)
+            .setDefaultValue(true)
+            .setSaveConsumer(value -> working.hudFreezingSnowEnabled = value)
+            .build());
+        hud.addEntry(entries.startIntField(Component.translatable("config.passiveregen.hud_freezing_snow_count"), working.hudFreezingSnowCount)
+            .setDefaultValue(4)
+            .setSaveConsumer(value -> working.hudFreezingSnowCount = value)
+            .build());
+
         ConfigCategory feedback = builder.getOrCreateCategory(Component.translatable("config.passiveregen.category.feedback"));
         feedback.addEntry(entries.startStrField(Component.translatable("config.passiveregen.particles"), particlesToString(working))
             .setDefaultValue("minecraft:heart;3;0.3")

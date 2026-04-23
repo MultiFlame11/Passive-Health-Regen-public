@@ -13,6 +13,9 @@ public class RegenHudPacket implements IMessage {
     public boolean regenActive;
     public boolean hungerBlocked;
     public boolean justHealed;
+    public boolean saturationBonus;
+    public boolean poisoned;
+    public boolean withered;
     public float currentHealth;
     public float maxHealth;
     public int maxRegenHealthPercent;
@@ -20,12 +23,15 @@ public class RegenHudPacket implements IMessage {
     public RegenHudPacket() {
     }
 
-    public RegenHudPacket(long outOfCombatTicks, int damageCooldownTicks, boolean regenActive, boolean hungerBlocked, boolean justHealed, float currentHealth, float maxHealth, int maxRegenHealthPercent) {
+    public RegenHudPacket(long outOfCombatTicks, int damageCooldownTicks, boolean regenActive, boolean hungerBlocked, boolean justHealed, float currentHealth, float maxHealth, int maxRegenHealthPercent, boolean saturationBonus, boolean poisoned, boolean withered) {
         this.outOfCombatTicks = outOfCombatTicks;
         this.damageCooldownTicks = damageCooldownTicks;
         this.regenActive = regenActive;
         this.hungerBlocked = hungerBlocked;
         this.justHealed = justHealed;
+        this.saturationBonus = saturationBonus;
+        this.poisoned = poisoned;
+        this.withered = withered;
         this.currentHealth = currentHealth;
         this.maxHealth = maxHealth;
         this.maxRegenHealthPercent = maxRegenHealthPercent;
@@ -38,6 +44,9 @@ public class RegenHudPacket implements IMessage {
         regenActive = buf.readBoolean();
         hungerBlocked = buf.readBoolean();
         justHealed = buf.readBoolean();
+        saturationBonus = buf.readBoolean();
+        poisoned = buf.readBoolean();
+        withered = buf.readBoolean();
         currentHealth = buf.readFloat();
         maxHealth = buf.readFloat();
         maxRegenHealthPercent = buf.readInt();
@@ -50,6 +59,9 @@ public class RegenHudPacket implements IMessage {
         buf.writeBoolean(regenActive);
         buf.writeBoolean(hungerBlocked);
         buf.writeBoolean(justHealed);
+        buf.writeBoolean(saturationBonus);
+        buf.writeBoolean(poisoned);
+        buf.writeBoolean(withered);
         buf.writeFloat(currentHealth);
         buf.writeFloat(maxHealth);
         buf.writeInt(maxRegenHealthPercent);

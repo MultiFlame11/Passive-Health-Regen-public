@@ -26,7 +26,10 @@ public class ClientProxy extends CommonProxy {
             message.justHealed,
             message.currentHealth,
             message.maxHealth,
-            message.maxRegenHealthPercent
+            message.maxRegenHealthPercent,
+            message.saturationBonus,
+            message.poisoned,
+            message.withered
         );
     }
 }

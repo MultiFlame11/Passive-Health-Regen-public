@@ -12,10 +12,13 @@
   "entrypoints": {
     "main": [
       "io.github.miche.passiveregen.PassiveRegenMod"
+    ],
+    "client": [
+      "io.github.miche.passiveregen.client.PassiveRegenClientMod"
     ]
   },
   "depends": {
-    "fabricloader": ">=0.12.0",
+    "fabricloader": ">=0.14.0",
     "minecraft": "~1.16.5",
     "java": ">=8",
     "fabric-api": "*"

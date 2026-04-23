@@ -19,6 +19,10 @@ public final class RegenHudConfig {
     public String showCondition = "injured";
     public boolean hideAtFullHealth = true;
     public boolean hudRichAnimations = true;
+    public boolean hudSaturationSheenEnabled = true;
+    public boolean hudSaturationSparkleEnabled = true;
+    public boolean hudPoisonEffectEnabled = true;
+    public boolean hudWitherEffectEnabled = true;
 
     public ParticleEntry[] particles = new ParticleEntry[0];
     public SoundEntry[] sounds = new SoundEntry[0];
@@ -42,6 +46,10 @@ public final class RegenHudConfig {
         config.showCondition = source.showCondition == null ? "injured" : source.showCondition.name().toLowerCase();
         config.hideAtFullHealth = source.hideAtFullHealth;
         config.hudRichAnimations = source.hudRichAnimations;
+        config.hudSaturationSheenEnabled = source.hudSaturationSheenEnabled;
+        config.hudSaturationSparkleEnabled = source.hudSaturationSparkleEnabled;
+        config.hudPoisonEffectEnabled = source.hudPoisonEffectEnabled;
+        config.hudWitherEffectEnabled = source.hudWitherEffectEnabled;
         config.particles = parseParticles(source.particles);
         config.sounds = parseSounds(source.sounds);
         config.sanitize();

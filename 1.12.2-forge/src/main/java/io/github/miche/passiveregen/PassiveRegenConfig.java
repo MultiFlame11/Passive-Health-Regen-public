@@ -129,6 +129,12 @@ public class PassiveRegenConfig {
 
         @Config.Comment("If false, passive regen is paused while sprinting.")
         public boolean regenWhileSprinting = true;
+
+        @Config.Comment("If true, passive regen is blocked while poison is active.")
+        public boolean disableHealingDuringPoison = true;
+
+        @Config.Comment("If true, passive regen is blocked while wither is active.")
+        public boolean disableHealingDuringWither = true;
     }
 
     public static class HungerBonus {
@@ -186,19 +192,57 @@ public class PassiveRegenConfig {
         public double hungerFullBonusSpeedMultiplier = 2.0D;
 
         @Config.Comment("Master toggle for the saturation bonus system.")
-        public boolean saturationBonusEnabled = false;
+        public boolean saturationBonusEnabled = true;
 
         @Config.Comment("Minimum saturation needed to trigger the saturation bonus.")
         @Config.RangeDouble(min = 0.0D, max = 20.0D)
         public double saturationBonusThreshold = 10.0D;
 
+        @Config.Comment({
+            "Once active, the saturation bonus stays on until saturation falls below this level.",
+            "Set equal to saturationBonusThreshold to disable hysteresis."
+        })
+        @Config.RangeDouble(min = 0.0D, max = 20.0D)
+        public double saturationBonusDeactivateThreshold = 10.0D;
+
         @Config.Comment("Heal speed multiplier when saturation meets the bonus threshold.")
         @Config.RangeDouble(min = 1.0D, max = 10.0D)
-        public double saturationBonusSpeedMultiplier = 1.25D;
+        public double saturationBonusSpeedMultiplier = 2.0D;
 
         @Config.Comment("Heal amount multiplier when saturation meets the bonus threshold.")
         @Config.RangeDouble(min = 1.0D, max = 10.0D)
-        public double saturationBonusHealMultiplier = 1.25D;
+        public double saturationBonusHealMultiplier = 2.0D;
+
+        @Config.Comment({
+            "Saturation consumed per 1 HP healed while the bonus is active.",
+            "0.0 = no saturation cost."
+        })
+        @Config.RangeDouble(min = 0.0D, max = 10.0D)
+        public double saturationBonusCostPerHp = 1.0D;
+
+        @Config.Comment({
+            "Small extra saturation drain per server tick while the bonus is active.",
+            "0.0 = no idle drain."
+        })
+        @Config.RangeDouble(min = 0.0D, max = 1.0D)
+        public double saturationBonusIdleDrainPerTick = 0.0D;
+
+        @Config.Comment({
+            "Saturation drain will not push the player below this floor.",
+            "0.0 = no floor."
+        })
+        @Config.RangeDouble(min = 0.0D, max = 20.0D)
+        public double saturationBonusMinSaturationFloor = 0.0D;
+
+        @Config.Comment("Extra flat HP added to each heal tick while the saturation bonus is active.")
+        @Config.RangeDouble(min = 0.0D, max = 10.0D)
+        public double saturationBonusFlatHealBonus = 0.25D;
+
+        @Config.Comment({
+            "If true, saturation bonus strength scales with how far above threshold saturation is.",
+            "If false, the full bonus applies as soon as the threshold is met."
+        })
+        public boolean saturationBonusScaleByExcess = false;
     }
 
     public static class RegenOnKill {
@@ -309,7 +353,7 @@ public class PassiveRegenConfig {
         public boolean showRegenHud = true;
 
         @Config.Comment("If true, shows the remaining cooldown in seconds next to the heart.")
-        public boolean showTimer = true;
+        public boolean showTimer = false;
 
         @Config.Comment({
             "Global opacity multiplier for the entire HUD (0.0 = invisible, 1.0 = fully opaque)."
@@ -368,6 +412,18 @@ public class PassiveRegenConfig {
             "Useful for players sensitive to motion or who prefer a cleaner look."
         })
         public boolean hudRichAnimations = true;
+
+        @Config.Comment("If true, shows the gold saturation-bonus sheen when that server-side bonus is active.")
+        public boolean hudSaturationSheenEnabled = true;
+
+        @Config.Comment("If true, shows the warm sparkle burst when a saturation-bonus heal tops you off.")
+        public boolean hudSaturationSparkleEnabled = true;
+
+        @Config.Comment("If true, shows the poison HUD state while poison is active.")
+        public boolean hudPoisonEffectEnabled = true;
+
+        @Config.Comment("If true, shows the wither HUD state while wither is active.")
+        public boolean hudWitherEffectEnabled = true;
 
         @Config.Comment("Optional heal feedback particles. Format: modid:particle;count;spread")
         public String[] particles = new String[0];
@@ -439,6 +495,8 @@ public class PassiveRegenConfig {
     @Config.Ignore public static int pvpDamageCooldownTicks = -1;
     @Config.Ignore public static boolean disableNaturalRegen = false;
     @Config.Ignore public static boolean regenWhileSprinting = true;
+    @Config.Ignore public static boolean disableHealingDuringPoison = true;
+    @Config.Ignore public static boolean disableHealingDuringWither = true;
     @Config.Ignore public static boolean hungerBonusEnabled = false;
     @Config.Ignore public static boolean hungerPenaltyEnabled = false;
     @Config.Ignore public static double hungerPenaltySpeedMultiplier = 0.25D;
@@ -450,10 +508,16 @@ public class PassiveRegenConfig {
     @Config.Ignore public static boolean hungerFullBonusEnabled = false;
     @Config.Ignore public static double hungerFullBonusHealMultiplier = 2.0D;
     @Config.Ignore public static double hungerFullBonusSpeedMultiplier = 2.0D;
-    @Config.Ignore public static boolean saturationBonusEnabled = false;
+    @Config.Ignore public static boolean saturationBonusEnabled = true;
     @Config.Ignore public static double saturationBonusThreshold = 10.0D;
-    @Config.Ignore public static double saturationBonusSpeedMultiplier = 1.25D;
-    @Config.Ignore public static double saturationBonusHealMultiplier = 1.25D;
+    @Config.Ignore public static double saturationBonusDeactivateThreshold = 10.0D;
+    @Config.Ignore public static double saturationBonusSpeedMultiplier = 2.0D;
+    @Config.Ignore public static double saturationBonusHealMultiplier = 2.0D;
+    @Config.Ignore public static double saturationBonusCostPerHp = 1.0D;
+    @Config.Ignore public static double saturationBonusIdleDrainPerTick = 0.0D;
+    @Config.Ignore public static double saturationBonusMinSaturationFloor = 0.0D;
+    @Config.Ignore public static double saturationBonusFlatHealBonus = 0.25D;
+    @Config.Ignore public static boolean saturationBonusScaleByExcess = false;
     @Config.Ignore public static boolean regenOnKillEnabled = false;
     @Config.Ignore public static int regenOnKillCooldownReduction = 50;
     @Config.Ignore public static boolean regenOnKillHostileOnly = false;
@@ -506,6 +570,8 @@ public class PassiveRegenConfig {
         pvpDamageCooldownTicks = limits.pvpDamageCooldownTicks;
         disableNaturalRegen = limits.disableNaturalRegen;
         regenWhileSprinting = limits.regenWhileSprinting;
+        disableHealingDuringPoison = limits.disableHealingDuringPoison;
+        disableHealingDuringWither = limits.disableHealingDuringWither;
 
         hungerBonusEnabled = hungerBonus.hungerBonusEnabled;
         hungerPenaltyEnabled = hungerBonus.hungerPenaltyEnabled;
@@ -520,8 +586,14 @@ public class PassiveRegenConfig {
         hungerFullBonusSpeedMultiplier = hungerBonus.hungerFullBonusSpeedMultiplier;
         saturationBonusEnabled = hungerBonus.saturationBonusEnabled;
         saturationBonusThreshold = hungerBonus.saturationBonusThreshold;
+        saturationBonusDeactivateThreshold = Math.max(0.0D, Math.min(hungerBonus.saturationBonusThreshold, hungerBonus.saturationBonusDeactivateThreshold));
         saturationBonusSpeedMultiplier = hungerBonus.saturationBonusSpeedMultiplier;
         saturationBonusHealMultiplier = hungerBonus.saturationBonusHealMultiplier;
+        saturationBonusCostPerHp = hungerBonus.saturationBonusCostPerHp;
+        saturationBonusIdleDrainPerTick = hungerBonus.saturationBonusIdleDrainPerTick;
+        saturationBonusMinSaturationFloor = Math.max(0.0D, Math.min(20.0D, hungerBonus.saturationBonusMinSaturationFloor));
+        saturationBonusFlatHealBonus = hungerBonus.saturationBonusFlatHealBonus;
+        saturationBonusScaleByExcess = hungerBonus.saturationBonusScaleByExcess;
 
         regenOnKillEnabled = regenOnKill.regenOnKillEnabled;
         regenOnKillCooldownReduction = regenOnKill.regenOnKillCooldownReduction;

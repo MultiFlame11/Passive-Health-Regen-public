@@ -4,9 +4,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.DamageSource;
 import net.minecraftforge.fml.common.eventhandler.Event;
 
-/**
- * Fired when damage starts the passive regen cooldown.
- */
 public class PassiveRegenCooldownStartEvent extends Event {
     protected final EntityPlayer player;
     protected final DamageSource damageSource;
