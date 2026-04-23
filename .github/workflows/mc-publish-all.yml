@@ -106,7 +106,7 @@ jobs:
             release_base="1.3.0"
           fi
           release_version="${release_base}+${project}"
-          name="Passive Health Regen ${release_base} (${mc_version} ${loader})"
+          name="Passive Health Regen ${release_base} (${mc_version}+${loader})"
           jar_path="$(find "${project}/build/libs" -maxdepth 1 -type f -name 'passive-health-regen-*.jar' ! -name '*-sources.jar' ! -name '*-dev.jar' | head -n 1)"
 
           if [ -z "$jar_path" ]; then
