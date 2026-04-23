@@ -36,6 +36,9 @@ HUD-SPEC.md
 # Pre-built upload folders
 upload-*/
 
+# Dev-only HTML preview / mockup tool
+preview/
+
 # Release/build helper scripts
 build_all_*.ps1
 bump_build_gradle.ps1

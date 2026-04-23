@@ -1,31 +1,54 @@
 # Passive Health Regen
 
-Adds passive health regeneration for players. Stay out of combat long enough with enough food and you'll slowly heal up on your own, no potion needed.
+Adds passive health regeneration for players. Stay out of combat long enough with enough food and you heal up on your own. No potion needed.
 
 Made mostly because eating food just to top off HP gets old fast, especially with mods that bump up max health.
+
+Current release: **1.3.0**. See [CHANGELOG-1.3.0.md](CHANGELOG-1.3.0.md) for the full release notes and [MODDING.md](MODDING.md) for resource pack / addon author info.
 
 ---
 
 ## What it does
 
+**Core regen:**
 - Heals players after a set time without taking damage
 - Requires a minimum hunger level before healing kicks in
-- Optional ramp-up mode that starts slow and builds up the longer you stay out of combat
+- Optional minimum saturation gate on top of the hunger gate
+- Optional ramp-up mode that starts slow and speeds up the longer you stay out of combat
 - Optional scaling for players with larger health pools
 - Stops regen above a configurable health percentage
-- Blocks regen while specific potion effects are active
-- Disable regen entirely in certain dimensions
+- Blocks regen while configured potion effects are active
+- Disable regen entirely in configured dimensions
 - Separate longer cooldown for PvP damage
-- Optional hunger bonus system -- eat well, heal faster and wait less
-- Optional hunger penalty mode -- regen still works below the food threshold, just slower
-- Optional regen-on-kill -- killing an enemy shaves time off your regen cooldown
-- Optional kill combo system -- consecutive kills stack up for bigger cooldown cuts
-- Optional bonus modifiers: crouch, light level, day/night cycle, difficulty
-- Optional campfire proximity bonus (1.20.1-fabric, next release)
 - Optional toggle to disable vanilla natural regeneration
 - Toggle to allow or block regen while sprinting
-- HUD overlay showing your regen cooldown and active healing state (1.12.2-forge, 1.20.1-fabric, 1.21.1-fabric)
-- Server-side only, except on 1.12.2-forge, 1.20.1-fabric, and 1.21.1-fabric where the HUD requires client install too
+- Reconnect cooldown persistence. Your damage cooldown survives disconnects
+
+**Bonuses:**
+- Hunger bonus. Eat well, heal faster and wait less, with an optional second tier at full hunger
+- Hunger penalty mode. Below the food threshold, regen slows instead of stopping
+- Saturation bonus with hysteresis, cost per HP healed, flat HP bonus on top of multipliers, optional scale-by-excess mode, saturation floor, and idle drain knob
+- Crouch, light level, day/night, and difficulty modifiers
+- Configurable stacking mode for all bonuses (multiplicative, additive, strongest-only)
+
+**Combat feedback:**
+- Regen-on-kill cooldown reduction with optional hostile-only restriction and entity blacklist
+- Kill combo stacking for streak bonuses
+- Large damage cooldown penalty. A single big hit extends your wait
+- Poison and wither healing gates. On by default. Flip off if another mod provides immunity
+
+**Environment:**
+- Campfire proximity bonus with speed multiplier, heal multiplier, and optional per-cycle cooldown reduction
+- Freezing penalty (1.18.2+). Slower regen, smaller heals, longer cooldown while frozen in powder snow. Optional hard block
+
+**HUD:**
+- Custom heart HUD on **every supported version**. Cooldown fill, heal flash, regen pulse, hunger-blocked droop, poison/wither tint, saturation glow
+- **Modern versions (1.20.1+)** additionally get the fancy pass. Breathing multi-layer under-glows, poison bubbles and ooze drips, wither cracks and debris, campfire rays and embers, saturation glint sweep, freezing frost icing and ice-shard heal burst, strict priority chain
+- HUD position presets, opacity, scale, and fade settings configurable in-game
+
+**Server / client split:**
+- All regen logic runs server-side
+- The HUD is client-side. Install on both sides for the visual. Server-only installs still regen normally
 
 ---
 
@@ -39,7 +62,7 @@ Made mostly because eating food just to top off HP gets old fast, especially wit
 
 Quick reference: 20 ticks = 1 second. 1 HP = half a heart. Default health bar is 20 HP (10 hearts).
 
-Options marked **[upcoming]** are implemented in 1.12.2-forge and 1.20.1-fabric but are not yet in the current public release (1.2.1). They will be available in the next version.
+Server config lives at `config/passive-health-regen.json`. HUD config lives at `config/passive-health-regen-hud.json` on the client.
 
 ### Core
 
@@ -48,164 +71,154 @@ Options marked **[upcoming]** are implemented in 1.12.2-forge and 1.20.1-fabric 
 | `enabled` | `true` | Master toggle. Set to false to disable the mod without uninstalling. |
 | `damageCooldownTicks` | `100` | Ticks without damage before healing starts. 100 = 5 seconds. |
 | `minimumHungerPercent` | `50` | Minimum hunger bar fill required to heal. 0 = any hunger, 50 = half, 100 = full. |
-| `minimumSaturationLevel` | `0.0` | Minimum saturation required to regen normally. 0.0 = disabled. Applies alongside the hunger check. **[upcoming]** |
+| `minimumSaturationLevel` | `0.0` | Minimum saturation required to regen normally. 0.0 = disabled. |
 | `healAmountPerTrigger` | `0.5` | HP healed per trigger. 0.5 = quarter heart, 1.0 = half heart, 2.0 = full heart. |
-| `baseHealIntervalTicks` | `100` | Ticks between each heal at base rate. 100 = every 5 seconds. |
-| `updateIntervalTicks` | `20` | How often the mod checks players. Lower is more responsive but adds a bit more overhead. |
+| `baseHealIntervalTicks` | `100` | Ticks between each heal at base rate. |
+| `updateIntervalTicks` | `20` | How often the mod checks players. |
 
 ### Ramp-up
-
-Healing starts slow and speeds up the longer you stay out of combat. Off by default.
 
 | Option | Default | Description |
 |---|---|---|
 | `rampUpEnabled` | `false` | Enables ramp-up mode. |
 | `fullStrengthHealIntervalTicks` | `50` | Ticks between heals at full ramp-up speed. |
-| `rampFullStrengthTicks` | `600` | Ticks out of combat before hitting full ramp-up speed. 600 = 30 seconds. |
+| `rampFullStrengthTicks` | `600` | Ticks out of combat before full ramp-up speed. |
 
 ### Health scaling
-
-Heals faster for players with larger health pools. Off by default.
 
 | Option | Default | Description |
 |---|---|---|
 | `scaleWithMaxHealth` | `false` | Enables heal rate scaling based on max HP above 20. |
-| `maxHealthScalingExponent` | `0.5` | Curve for the scaling. 0.5 = square root, gentle curve. 1.0 = linear. |
+| `maxHealthScalingExponent` | `0.5` | 0.5 = square root, gentle curve. 1.0 = linear. |
 | `maxHealthScalingCap` | `2.0` | Maximum multiplier from health scaling. |
 
 ### Conditions
 
 | Option | Default | Description |
 |---|---|---|
-| `maxRegenHealthPercent` | `100` | Regen stops when health reaches this percentage of max health. 80 = stops at 80%. |
-| `blockedEffects` | `[]` | List of effect IDs that pause regen while active. Example: `["minecraft:poison"]` |
-| `dimensionBlacklist` | `[]` | List of dimension IDs where regen is disabled. Example: `["minecraft:the_nether"]` |
-| `pvpDamageCooldownTicks` | `-1` | Separate cooldown after taking damage from another player. -1 = same as regular cooldown. |
-| `disableNaturalRegen` | `false` | Drains food exhaustion to suppress vanilla natural regeneration. Useful if you want this mod to be the only source of passive HP recovery. **[upcoming]** |
-| `regenWhileSprinting` | `true` | If false, regen is paused while the player is sprinting. **[upcoming]** |
+| `maxRegenHealthPercent` | `100` | Regen stops at this percent of max HP. |
+| `blockedEffects` | `[]` | Effect IDs that pause regen. |
+| `dimensionBlacklist` | `[]` | Dimensions where regen is disabled. |
+| `pvpDamageCooldownTicks` | `-1` | Separate cooldown after PvP damage. -1 = same as regular. |
+| `disableNaturalRegen` | `false` | Drains food exhaustion to suppress vanilla natural regen. |
+| `regenWhileSprinting` | `true` | If false, regen is paused while sprinting. |
 
-### Hunger bonus **[upcoming]**
-
-Gives bonus healing speed, heal amount, and shorter cooldown when hunger is above a threshold. Both tiers off by default.
+### Hunger bonus
 
 | Option | Default | Description |
 |---|---|---|
-| `hungerBonusEnabled` | `false` | Enables the threshold hunger bonus. |
-| `hungerBonusThresholdPercent` | `75` | Hunger level required to get the bonus. 75 = 15/20 bars. |
-| `hungerBonusHealMultiplier` | `1.5` | Multiplier applied to heal amount when above threshold. |
-| `hungerBonusSpeedMultiplier` | `1.5` | Multiplier applied to heal speed when above threshold. |
-| `hungerBonusCooldownReduction` | `25` | Percent reduction to the damage cooldown when above threshold. 25 = 5s wait becomes 3.75s. |
-| `hungerFullBonusEnabled` | `false` | Enables a second bonus tier that applies only at completely full hunger (20/20). Stacks on top of the threshold bonus. |
-| `hungerFullBonusHealMultiplier` | `2.0` | Heal amount multiplier at full hunger. |
-| `hungerFullBonusSpeedMultiplier` | `2.0` | Heal speed multiplier at full hunger. |
+| `hungerBonusEnabled` | `false` | Enables the hunger bonus. |
+| `hungerBonusThresholdPercent` | `75` | Hunger required for the bonus. |
+| `hungerBonusHealMultiplier` | `1.5` | Heal amount multiplier. |
+| `hungerBonusSpeedMultiplier` | `1.5` | Heal speed multiplier. |
+| `hungerBonusCooldownReduction` | `25` | Percent cooldown reduction. |
+| `hungerFullBonusEnabled` | `false` | Extra tier at completely full hunger (20/20). |
+| `hungerFullBonusHealMultiplier` | `2.0` | Full-hunger heal multiplier. |
+| `hungerFullBonusSpeedMultiplier` | `2.0` | Full-hunger speed multiplier. |
 
-### Hunger penalty **[upcoming]**
-
-Instead of hard-blocking regen below the food threshold, the penalty mode lets regen continue at a reduced rate. The HUD still shows orange so players can see something is different.
+### Hunger penalty
 
 | Option | Default | Description |
 |---|---|---|
-| `hungerPenaltyEnabled` | `false` | If true, regen continues below the food threshold but at reduced speed and heal amount instead of stopping entirely. |
-| `hungerPenaltySpeedMultiplier` | `0.25` | Speed multiplier when penalized. 0.25 = 4x slower than normal. |
-| `hungerPenaltyHealMultiplier` | `1.0` | Heal amount multiplier when penalized. 1.0 = same heal size, just slower. |
+| `hungerPenaltyEnabled` | `false` | Regen continues below the food threshold at reduced rate instead of stopping. |
+| `hungerPenaltySpeedMultiplier` | `0.25` | Speed multiplier when penalized. |
+| `hungerPenaltyHealMultiplier` | `1.0` | Heal amount multiplier when penalized. |
 
-### Saturation bonus **[upcoming]**
-
-Rewards players with high saturation with faster and stronger heals. Off by default.
+### Saturation bonus
 
 | Option | Default | Description |
 |---|---|---|
-| `saturationBonusEnabled` | `false` | Enables the saturation bonus. |
-| `saturationBonusThreshold` | `10.0` | Saturation level required to get the bonus. |
-| `saturationBonusSpeedMultiplier` | `1.25` | Speed multiplier when saturation is above the threshold. |
-| `saturationBonusHealMultiplier` | `1.25` | Heal amount multiplier when saturation is above the threshold. |
+| `saturationBonusEnabled` | `true` | Enables the saturation bonus. |
+| `saturationBonusThreshold` | `10.0` | Saturation required to activate. |
+| `saturationBonusDeactivateThreshold` | `10.0` | Drop-out saturation (hysteresis). Equal to threshold = off. |
+| `saturationBonusSpeedMultiplier` | `2.0` | Speed multiplier when active. |
+| `saturationBonusHealMultiplier` | `2.0` | Heal amount multiplier when active. |
+| `saturationBonusCostPerHp` | `1.0` | Saturation consumed per HP healed. Vanilla uses 1.5. |
+| `saturationBonusIdleDrainPerTick` | `0.0` | Optional per-tick wick drain while active. 0 = vanilla model. |
+| `saturationBonusMinSaturationFloor` | `0.0` | Drain will not push saturation below this. |
+| `saturationBonusFlatHealBonus` | `0.25` | Flat HP added per heal tick on top of multipliers. |
+| `saturationBonusScaleByExcess` | `false` | When true, bonus scales linearly with saturation above threshold. |
 
-### Bonus stacking **[upcoming]**
-
-Controls how multiple active bonuses combine when more than one applies at once.
+### Healing gates
 
 | Option | Default | Description |
 |---|---|---|
-| `bonusStackingMode` | `MULTIPLICATIVE` | How bonuses combine. `MULTIPLICATIVE` = all multiply together. `ADDITIVE` = extras add up. `STRONGEST_ONLY` = only the highest bonus applies. |
+| `disableHealingDuringPoison` | `true` | Blocks regen while poisoned. Visuals always play regardless. |
+| `disableHealingDuringWither` | `true` | Blocks regen under wither. Visuals always play regardless. |
 
-### Regen on kill **[upcoming]**
+### Bonus stacking
 
-Killing an enemy reduces your remaining regen cooldown. Off by default.
+| Option | Default | Description |
+|---|---|---|
+| `bonusStackingMode` | `MULTIPLICATIVE` | `MULTIPLICATIVE`, `ADDITIVE`, or `STRONGEST_ONLY`. |
+
+### Regen on kill
 
 | Option | Default | Description |
 |---|---|---|
 | `regenOnKillEnabled` | `false` | Enables cooldown reduction on kill. |
-| `regenOnKillCooldownReduction` | `50` | Percent of remaining cooldown removed on kill. 50 = cuts remaining wait in half. |
-| `regenOnKillHostileOnly` | `false` | If true, only hostile mobs grant the cooldown reduction. Stops passive animals from being farmed for free regen. |
-| `regenOnKillBlacklist` | `[]` | Entity IDs that never grant the kill bonus. Example: `["minecraft:villager"]` |
-
-### Kill combo **[upcoming]**
-
-Consecutive kills within a time window stack up for bigger cooldown cuts on top of the base reduction.
-
-| Option | Default | Description |
-|---|---|---|
+| `regenOnKillCooldownReduction` | `50` | Percent of remaining cooldown removed on kill. |
+| `regenOnKillHostileOnly` | `false` | Only hostile mobs grant the reduction. |
+| `regenOnKillBlacklist` | `[]` | Entity IDs that never grant the bonus. |
 | `regenOnKillComboEnabled` | `false` | Enables kill combo stacking. |
-| `regenOnKillComboWindowTicks` | `200` | How long after a kill the next kill counts as a combo. 200 = 10 seconds. |
-| `regenOnKillComboMaxStacks` | `5` | Maximum combo stacks before the reduction caps out. |
-| `regenOnKillComboReductionPerStack` | `10` | Extra percent of cooldown removed per combo stack on top of the base reduction. |
+| `regenOnKillComboWindowTicks` | `200` | Window for consecutive kills to count as combo. |
+| `regenOnKillComboMaxStacks` | `5` | Max combo stacks. |
+| `regenOnKillComboReductionPerStack` | `10` | Extra percent per stack on top of base. |
 
-### Bonus modifiers **[upcoming]**
+### Bonus modifiers
 
-These are all off by default and stack with each other and the hunger/saturation bonuses according to `bonusStackingMode`.
-
-**Crouch bonus** -- heal faster and stronger while sneaking.
+Crouch, light level, day/night, difficulty. All off by default, all stack per `bonusStackingMode`.
 
 | Option | Default | Description |
 |---|---|---|
-| `crouchBonusEnabled` | `false` | Enables the crouch bonus. |
+| `crouchBonusEnabled` | `false` | Bonus while sneaking. |
 | `crouchSpeedMultiplier` | `1.5` | Speed multiplier while sneaking. |
-| `crouchHealMultiplier` | `1.0` | Heal amount multiplier while sneaking. 1.0 = no change. |
+| `crouchHealMultiplier` | `1.0` | Heal multiplier while sneaking. |
+| `lightLevelBonusEnabled` | `false` | Scale regen with light level. |
+| `lightLevelMinMultiplier` | `0.75` | Multiplier at light 0. |
+| `lightLevelMaxMultiplier` | `1.25` | Multiplier at light 15. |
+| `dayNightMultiplierEnabled` | `false` | Scale regen with time of day. |
+| `dayMultiplier` | `1.25` | Daytime multiplier. |
+| `nightMultiplier` | `0.75` | Nighttime multiplier. |
+| `difficultyScalingEnabled` | `false` | Scale regen with world difficulty. |
+| `peacefulMultiplier` | `2.0` | Peaceful. |
+| `easyMultiplier` | `1.25` | Easy. |
+| `normalMultiplier` | `1.0` | Normal. |
+| `hardMultiplier` | `0.75` | Hard. |
 
-**Light level** -- regen scales with how bright your surroundings are.
-
-| Option | Default | Description |
-|---|---|---|
-| `lightLevelBonusEnabled` | `false` | Enables light level scaling. |
-| `lightLevelMinMultiplier` | `0.75` | Multiplier at light level 0. Below 1.0 = penalty. |
-| `lightLevelMaxMultiplier` | `1.25` | Multiplier at light level 15. Interpolated linearly between min and max. |
-
-**Day/night** -- regen changes based on the time of day.
-
-| Option | Default | Description |
-|---|---|---|
-| `dayNightMultiplierEnabled` | `false` | Enables day/night scaling. |
-| `dayMultiplier` | `1.25` | Multiplier during daytime. |
-| `nightMultiplier` | `0.75` | Multiplier during nighttime. |
-
-**Difficulty scaling** -- regen scales with world difficulty.
-
-| Option | Default | Description |
-|---|---|---|
-| `difficultyScalingEnabled` | `false` | Enables difficulty scaling. |
-| `peacefulMultiplier` | `2.0` | Multiplier on Peaceful. |
-| `easyMultiplier` | `1.25` | Multiplier on Easy. |
-| `normalMultiplier` | `1.0` | Multiplier on Normal. |
-| `hardMultiplier` | `0.75` | Multiplier on Hard. |
-
-### Large damage penalty **[upcoming]**
-
-Taking a big hit in one shot extends your regen cooldown beyond the normal duration.
+### Large damage penalty
 
 | Option | Default | Description |
 |---|---|---|
 | `largeDamagePenaltyEnabled` | `false` | Enables the large damage penalty. |
-| `largeDamageThresholdPercent` | `50` | Single hit must deal at least this percent of max HP to count as a large hit. |
-| `largeDamageCooldownMultiplier` | `1.5` | Multiplier applied to the cooldown duration after a large hit. |
+| `largeDamageThresholdPercent` | `50` | Percent of max HP a single hit must deal to count. |
+| `largeDamageCooldownMultiplier` | `1.5` | Cooldown multiplier after a large hit. |
 
-### Campfire **[upcoming, 1.20.1-fabric only]**
+### Campfire
 
-Regen activates when standing near a lit campfire regardless of other conditions. Soul campfires count too.
+Sit near a lit campfire (soul campfires count) for faster, stronger heals. Routed through `reduceCooldown` so addon cooldown sources stack honestly.
 
 | Option | Default | Description |
 |---|---|---|
-| `campfireRegenEnabled` | `false` | Enables campfire proximity regen. |
-| `campfireRadius` | `8` | Block radius to check for a nearby lit campfire. |
+| `campfireRegenEnabled` | `true` | Enables campfire bonuses. |
+| `campfireRadius` | `8` | Block radius to check. |
+| `campfireSpeedMultiplier` | `2.0` | Speed multiplier near a campfire. |
+| `campfireHealMultiplier` | `1.0` | Heal amount multiplier near a campfire. |
+| `campfireCooldownReductionEnabled` | `false` | One-shot cooldown reduction when first near a campfire after damage. |
+| `campfireCooldownReductionPercent` | `20` | Percent of remaining cooldown removed. |
+
+### Freezing penalty (1.18.2+)
+
+Vanilla freezing didn't exist before 1.17, so this section isn't present on 1.12.2 or 1.16.5.
+
+| Option | Default | Description |
+|---|---|---|
+| `freezingPenaltyEnabled` | `true` | Enables the freezing penalty. |
+| `freezingPenaltyThresholdPercent` | `0.0` | Fraction of freeze ticks before penalty kicks in. |
+| `freezingSpeedMultiplier` | `0.5` | Speed multiplier while frozen past threshold. |
+| `freezingHealMultiplier` | `0.75` | Heal amount multiplier while frozen past threshold. |
+| `freezingCooldownMultiplier` | `1.75` | Cooldown multiplier while frozen. |
+| `freezingBlocksRegen` | `false` | Hard block regen while frozen. Overrides the multipliers. |
 
 ---
 
@@ -217,34 +230,59 @@ Addon mods can interact with the regen system via the public API.
 // Clears the damage cooldown so regen starts on the next tick
 PassiveRegenAPI.clearDamageCooldown(player.getUUID());
 
-// Reduces the remaining cooldown by a percentage of what is left
-// 50 = cuts remaining wait in half, 100 = same as clear
+// Reduces the remaining cooldown by a percentage. Use this path so your
+// addon stacks honestly with campfire and other reduction sources.
 PassiveRegenAPI.reduceCooldown(player.getUUID(), 50);
 
-// Applies a temporary regen speed multiplier
-// 1.5 = 50% faster, 2.0 = double speed
-// durationTicks = how long the boost lasts
+// Temporary speed multiplier. 1.5 = 50% faster. durationTicks = length.
 PassiveRegenAPI.applyRegenBoost(player.getUUID(), multiplier, durationTicks);
 
-// Bypasses hunger and saturation gates for a duration (upcoming, 1.12.2-forge)
-// Player regens at full normal rate regardless of food state
+// Queries
+PassiveRegenAPI.isRegenReady(player.getUUID());              // cooldown elapsed?
+PassiveRegenAPI.isHungerBlocked(player.getUUID());           // below hunger threshold?
+PassiveRegenAPI.getRemainingCooldownTicks(player.getUUID()); // ticks remaining
+PassiveRegenAPI.getCurrentHealRate(player.getUUID());        // effective HP per update
+
+// Penalties / blocks
+PassiveRegenAPI.applyRegenPenalty(player.getUUID(), multiplier, durationTicks);
+PassiveRegenAPI.blockRegen(player.getUUID(), durationTicks);
+
+// Bypass hunger/saturation gates for a duration
 PassiveRegenAPI.overrideHungerRestrictions(player.getUUID(), durationTicks);
 
-// Check if the mod is loaded before calling (useful for optional dependencies)
+// Availability check for optional dependencies
 if (PassiveRegenAPI.isAvailable()) { ... }
 ```
 
 Declare as an optional dependency in your `fabric.mod.json` or `mods.toml`.
 
+For resource pack authors and renderer-level mods, see [MODDING.md](MODDING.md). Key points: the base heart is a PNG sprite sheet (packs can restyle it), but every effect overlay (poison bubbles, wither cracks, frost icing, campfire rays, gold motes) is code-drawn via pixel rectangles and cannot be swapped via PNG. The reserved filenames under `assets/passiveregen/textures/gui/reserved/` are forward-compatibility slots, not a drop-in customization API.
+
 ---
 
 ## Versions
 
-| Version | Loader |
-|---|---|
-| 1.12.2 | Forge |
-| 1.16.5 | Forge, Fabric |
-| 1.18.2 | Forge, Fabric |
-| 1.20.1 | Forge, NeoForge, Fabric |
-| 1.20.4 | NeoForge |
-| 1.21.1 | Forge, NeoForge, Fabric |
+All twelve builds ship with full gameplay and the heart HUD. Modern versions (1.20.1+) get the fancy particle HUD pass.
+
+| Version | Gameplay | HUD |
+|---|---|---|
+| 1.12.2 Forge | Full* | Basic |
+| 1.16.5 Fabric | Full* | Basic |
+| 1.16.5 Forge | Full* | Basic |
+| 1.18.2 Fabric | Full | Basic |
+| 1.18.2 Forge | Full | Basic |
+| 1.20.1 Fabric | Full | Fancy |
+| 1.20.1 Forge | Full | Fancy |
+| 1.20.1 NeoForge | Full | Fancy |
+| 1.20.4 NeoForge | Full | Fancy |
+| 1.21.1 Fabric | Full | Fancy |
+| 1.21.1 Forge | Full | Fancy |
+| 1.21.1 NeoForge | Full | Fancy |
+
+\* No freezing penalty. The mechanic does not exist on those Minecraft versions.
+
+---
+
+## Issues
+
+Please open an issue with your version, loader, and config. Cross-version releases always surface edge cases, and a clean report makes fixes land fast.
