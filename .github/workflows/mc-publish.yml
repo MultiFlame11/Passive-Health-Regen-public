@@ -37,7 +37,7 @@ on:
       modrinth-id:
         description: Modrinth project id
         required: false
-        default: ""
+        default: "qzsH2EGS"
         type: string
       curseforge-id:
         description: CurseForge project id
