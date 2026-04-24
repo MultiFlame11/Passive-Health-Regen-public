@@ -20,7 +20,7 @@ The active heart is **16×64**. Three 16×16 rows are in use, one is reserved:
 |  0 | Outline sprite         | `drawHeart` outline pass, `drawFreezingHighlight`   |
 | 16 | Silhouette / glow mask | `drawGlow` (all colored under-glows, regen pulse)   |
 | 32 | Fill sprite            | Health fill and `drawHealFlash`                     |
-| 48 | **Reserved**           | Unused in 1.3.0. No current render path samples it. |
+| 48 | **Reserved**           | Unused in 1.3.1. No current render path samples it. |
 
 Resource packs restyling the heart should preserve this layout. The y=48 row is intentionally unpainted so a future render pass can introduce an overlay without forcing packs to resize. Treat that row as reserved space, with the caveat that the semantic meaning may be pinned in a later release and packs that pre-ship content for it might need a follow-up upload.
 
@@ -38,7 +38,7 @@ Heads up for pack authors: the following effect visuals are not assets. They are
 - Critical / hunger: shake, wobble, droop tilt (transform, not pixels)
 - Full-heal sparkle: radial pixel lines and dots
 
-None of this is loaded from a texture file. A resource pack cannot recolor or reshape these by dropping assets into the jar. Changing them cleanly requires a mixin into the relevant `drawX` / `updateAndDrawX` method. A public registration API for custom HUD states is on the table but not in 1.3.0.
+None of this is loaded from a texture file. A resource pack cannot recolor or reshape these by dropping assets into the jar. Changing them cleanly requires a mixin into the relevant `drawX` / `updateAndDrawX` method. A public registration API for custom HUD states is on the table but not in 1.3.1.
 
 What packs **can** theme via PNG right now:
 - The base heart sprite sheet (`regen_heart.png`)
@@ -48,7 +48,7 @@ What packs **can** theme via PNG right now:
 
 ## Reserved effect heart filenames (`textures/gui/reserved/`)
 
-These placeholder files ship in the jar under canonical filenames. They are **not loaded by any render path in 1.3.0**. They exist so that when a future version adds matching state logic, packs that already customized the filename work without a follow-up upload.
+These placeholder files ship in the jar under canonical filenames. They are **not loaded by any render path in 1.3.1**. They exist so that when a future version adds matching state logic, packs that already customized the filename work without a follow-up upload.
 
 | Filename                       | Planned state trigger                                          |
 |--------------------------------|----------------------------------------------------------------|
@@ -69,7 +69,7 @@ If you want to pre-stage art for an effect not on this list, put it alongside th
 
 ---
 
-## Effect priority chain (1.3.0)
+## Effect priority chain (1.3.1)
 
 The HUD paints exactly one highest-priority state at a time. Current order, highest first:
 
@@ -119,7 +119,7 @@ Suggested (reserved, non-binding):
 
 ## Config field reservations
 
-These fields are **not present** in 1.3.0's config but are reserved so a future version can introduce them without a migration step. Don't pre-write them into your configs. They'll be ignored today and defaults may shift before wiring:
+These fields are **not present** in 1.3.1's config but are reserved so a future version can introduce them without a migration step. Don't pre-write them into your configs. They'll be ignored today and defaults may shift before wiring:
 
 Server-side (`passive-health-regen.json`):
 - `disableHealingDuringRadiation` (bool)
@@ -141,7 +141,7 @@ Client-side (`passive-health-regen-hud.json`):
 
 ## Sound events
 
-No custom sound events ship in 1.3.0. When effect-specific sounds land, they'll be namespaced `passiveregen:heart.<effect>.<event>` (e.g. `passiveregen:heart.radiation.warn`). Packs shouldn't pre-ship ogg files for these today.
+No custom sound events ship in 1.3.1. When effect-specific sounds land, they'll be namespaced `passiveregen:heart.<effect>.<event>` (e.g. `passiveregen:heart.radiation.warn`). Packs shouldn't pre-ship ogg files for these today.
 
 ---
 
@@ -149,5 +149,5 @@ No custom sound events ship in 1.3.0. When effect-specific sounds land, they'll 
 
 - **Bandages and other cooldown-reduction addons**: route cooldown reduction through the server's `reduceCooldown(...)` path (see `PassiveRegenHandler`). Keeps stacking with campfire and future reduction sources honest.
 - **Status-effect immunity packs**: flip `disableHealingDuringPoison` and `disableHealingDuringWither` (and future equivalents) to `false` so the HUD still plays the effect aesthetic while healing continues normally.
-- **Custom HUD states**: there is no registry API in 1.3.0. To push a fully custom state onto the heart, mixin into `RegenHudRenderer` after the existing priority chain. A public registration API is under consideration for a later release.
+- **Custom HUD states**: there is no registry API in 1.3.1. To push a fully custom state onto the heart, mixin into `RegenHudRenderer` after the existing priority chain. A public registration API is under consideration for a later release.
 - **Custom particle visuals for existing states**: same answer. No PNG swap works for effect overlays. Mixin into the specific `drawX` / `updateAndDrawX` method for the state you're retheming.
