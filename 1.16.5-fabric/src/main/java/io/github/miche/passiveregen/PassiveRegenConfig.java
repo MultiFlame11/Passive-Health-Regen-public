@@ -64,6 +64,12 @@ public final class PassiveRegenConfig {
 
     public boolean saturationBonusScaleByExcess = false;
 
+    public boolean hungerDrainEnabled = false;
+    public double hungerDrainSpeedMultiplier = 1.0D;
+    public double hungerDrainCostPerHp = 0.6D;
+    public double hungerDrainIdleDrainPerTick = 0.0D;
+    public double hungerDrainMinFloor = 0.0D;
+
     public boolean disableHealingDuringPoison = true;
     public boolean disableHealingDuringWither = true;
 
@@ -195,6 +201,13 @@ public final class PassiveRegenConfig {
                 writer.write("  \"saturationBonusFlatHealBonus\": " + saturationBonusFlatHealBonus + ","); writer.newLine();
                 writer.write("  // When true, bonus strength scales linearly with sat above threshold (0% at threshold, 100% at 20)."); writer.newLine();
                 writer.write("  \"saturationBonusScaleByExcess\": " + saturationBonusScaleByExcess + ","); writer.newLine();
+                writer.newLine();
+                writer.write("  // Hunger drain"); writer.newLine();
+                writer.write("  \"hungerDrainEnabled\": " + hungerDrainEnabled + ","); writer.newLine();
+                writer.write("  \"hungerDrainSpeedMultiplier\": " + hungerDrainSpeedMultiplier + ","); writer.newLine();
+                writer.write("  \"hungerDrainCostPerHp\": " + hungerDrainCostPerHp + ","); writer.newLine();
+                writer.write("  \"hungerDrainIdleDrainPerTick\": " + hungerDrainIdleDrainPerTick + ","); writer.newLine();
+                writer.write("  \"hungerDrainMinFloor\": " + hungerDrainMinFloor + ","); writer.newLine();
                 writer.newLine();
                 writer.write("  // Status effect blockers (visuals always play; toggle only affects regen)"); writer.newLine();
                 writer.write("  \"disableHealingDuringPoison\": " + disableHealingDuringPoison + ","); writer.newLine();
@@ -384,6 +397,10 @@ public final class PassiveRegenConfig {
         saturationBonusIdleDrainPerTick = clampDouble(saturationBonusIdleDrainPerTick, 0.0D, 1.0D);
         saturationBonusMinSaturationFloor = clampDouble(saturationBonusMinSaturationFloor, 0.0D, 20.0D);
         saturationBonusFlatHealBonus = clampDouble(saturationBonusFlatHealBonus, 0.0D, 10.0D);
+        hungerDrainSpeedMultiplier = clampDouble(hungerDrainSpeedMultiplier, 0.0D, 10.0D);
+        hungerDrainCostPerHp = clampDouble(hungerDrainCostPerHp, 0.0D, 10.0D);
+        hungerDrainIdleDrainPerTick = clampDouble(hungerDrainIdleDrainPerTick, 0.0D, 1.0D);
+        hungerDrainMinFloor = clampDouble(hungerDrainMinFloor, 0.0D, 20.0D);
 
         regenOnKillCooldownReduction = clampInt(regenOnKillCooldownReduction, 0, 100);
         if (regenOnKillBlacklist == null) regenOnKillBlacklist = new String[0];

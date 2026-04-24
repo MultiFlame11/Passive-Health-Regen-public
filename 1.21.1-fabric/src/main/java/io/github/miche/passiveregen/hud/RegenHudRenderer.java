@@ -9,6 +9,8 @@ import io.github.miche.passiveregen.config.RegenHudConfig;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.DeltaTracker;
@@ -17,6 +19,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
+@Environment(EnvType.CLIENT)
 public final class RegenHudRenderer implements HudRenderCallback {
     private static final ResourceLocation HEART_TEXTURE = ResourceLocation.fromNamespaceAndPath(PassiveRegenMod.MODID, "textures/gui/regen_heart.png");
     private static final int TEX_W = 16;

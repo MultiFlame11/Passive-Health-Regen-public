@@ -2,6 +2,8 @@ package io.github.miche.passiveregen.hud;
 
 import io.github.miche.passiveregen.client.RegenHudState;
 import io.github.miche.passiveregen.config.RegenHudConfig;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -12,6 +14,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 
+@Environment(EnvType.CLIENT)
 public final class RegenFeedbackHandler {
     private RegenFeedbackHandler() {
     }

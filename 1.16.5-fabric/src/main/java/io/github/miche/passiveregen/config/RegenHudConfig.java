@@ -7,8 +7,11 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 
+@Environment(EnvType.CLIENT)
 public final class RegenHudConfig {
     private static final Gson GSON = new GsonBuilder().create();
     private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("passive-health-regen-hud.json");

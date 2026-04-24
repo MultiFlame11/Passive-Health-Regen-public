@@ -1,7 +1,10 @@
 package io.github.miche.passiveregen.hud;
 
 import io.github.miche.passiveregen.config.RegenHudConfig;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
+@Environment(EnvType.CLIENT)
 public final class HudPositionPreset {
     private static final int HEART_SIZE = 16;
     private static final int TIMER_GAP = 4;

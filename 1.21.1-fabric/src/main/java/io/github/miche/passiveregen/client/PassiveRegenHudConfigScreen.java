@@ -6,9 +6,12 @@ import java.util.stream.Collectors;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
+@Environment(EnvType.CLIENT)
 public final class PassiveRegenHudConfigScreen {
     private static final PositionPreset[] POSITION_PRESETS = PositionPreset.values();
     private static final AnchorPreset[] ANCHOR_PRESETS = AnchorPreset.values();

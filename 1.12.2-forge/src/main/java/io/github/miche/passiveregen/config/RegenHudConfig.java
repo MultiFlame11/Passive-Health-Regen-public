@@ -1,7 +1,10 @@
 package io.github.miche.passiveregen.config;
 
 import io.github.miche.passiveregen.PassiveRegenConfig;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
+@SideOnly(Side.CLIENT)
 public final class RegenHudConfig {
     public boolean showRegenHud = true;
     public boolean showTimer = false;

@@ -11,9 +11,12 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 
+@OnlyIn(Dist.CLIENT)
 public final class RegenFeedbackHandler {
     @SubscribeEvent
     public void onClientTick(ClientTickEvent.Post event) {
