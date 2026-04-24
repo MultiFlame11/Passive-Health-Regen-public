@@ -6,7 +6,7 @@ on:
       version-base:
         description: Base release version used for every selected folder
         required: false
-        default: "1.3.0"
+        default: "1.3.1"
         type: string
       version-type:
         description: Release channel
@@ -30,7 +30,7 @@ on:
       changelog-file:
         description: Optional changelog file path from repo root
         required: false
-        default: "CHANGELOG-1.3.0.md"
+        default: "CHANGELOG-1.3.1.md"
         type: string
 
 jobs:
@@ -103,7 +103,7 @@ jobs:
           loader="${project##*-}"
           release_base="${{ inputs.version-base }}"
           if [ -z "$release_base" ]; then
-            release_base="1.3.0"
+            release_base="1.3.1"
           fi
           release_version="${release_base}+${project}"
           name="Passive Health Regen ${release_base}+${mc_version} ${loader}"
