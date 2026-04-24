@@ -6,6 +6,8 @@ import io.github.miche.passiveregen.client.PassiveRegenClientMod;
 import io.github.miche.passiveregen.client.RegenHudState;
 import io.github.miche.passiveregen.config.RegenHudConfig;
 import java.util.Locale;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -15,6 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import com.mojang.blaze3d.vertex.PoseStack;
 
+@Environment(EnvType.CLIENT)
 public final class RegenHudRenderer extends GuiComponent implements HudRenderCallback {
     private static final ResourceLocation HEART_TEXTURE = new ResourceLocation(PassiveRegenMod.MODID, "textures/gui/regen_heart.png");
     private static final int TEX_W = 16;

@@ -42,6 +42,7 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
     private final Set<UUID> campfireCooldownApplied = new HashSet<>();
     private final Set<UUID> saturationBonusActive = new HashSet<>();
     private final Map<UUID, Float> frozenMaxDuringCooldown = new HashMap<>();
+    private final Map<UUID, Double> hungerDrainRemainders = new HashMap<>();
     private PassiveRegenConfig storedConfig;
     private MinecraftServer currentServer;
     static volatile long serverTick = 0L;
@@ -232,6 +233,7 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
             }
 
             if (!shouldProcessPlayer(player, config)) {
+                applyHungerDrainIdle(player, playerId, outOfCombatTicks, cooldownDuration, hungerBlocked, config);
                 syncHudState(player, outOfCombatTicks, cooldownDuration, false, hungerBlocked, false, config.maxRegenHealthPercent);
                 continue;
             }
@@ -287,6 +289,10 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
                     }
                 }
 
+                if (actualHealed > 0.0F) {
+                    applyHungerDrainHealCost(player, playerId, actualHealed, config);
+                }
+
                 justHealed = true;
                 regenActive = true;
             }
@@ -333,6 +339,7 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
         frozenMaxDuringCooldown.remove(playerId);
         campfireCooldownApplied.remove(playerId);
         saturationBonusActive.remove(playerId);
+        hungerDrainRemainders.remove(playerId);
     }
 
     public void onPlayerLogin(ServerPlayer player) {
@@ -343,6 +350,7 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
         hungerOverrides.remove(playerId);
         lastKnownHealth.remove(playerId);
         lastHudStates.remove(playerId);
+        hungerDrainRemainders.remove(playerId);
         restoreCooldownStateAfterReconnect(player);
 
         Long lastDamageTick = lastDamageTicks.get(playerId);
@@ -372,6 +380,7 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
         frozenMaxDuringCooldown.remove(playerId);
         campfireCooldownApplied.remove(playerId);
         saturationBonusActive.remove(playerId);
+        hungerDrainRemainders.remove(playerId);
         clearSavedCooldownState(player);
         syncHudState(player, 0L, 0, false, false, false, storedConfig != null ? storedConfig.maxRegenHealthPercent : 100);
     }
@@ -455,6 +464,72 @@ public final class PassiveRegenHandler implements IPassiveRegenInternals {
         double threshold = storedConfig.saturationBonusThreshold;
         double range = Math.max(0.01D, 20.0D - threshold);
         return Math.max(0.0D, Math.min(1.0D, (sat - threshold) / range));
+    }
+
+    private void applyHungerDrainHealCost(ServerPlayer player, UUID playerId, float actualHealed, PassiveRegenConfig config) {
+        if (!config.hungerDrainEnabled
+                || actualHealed <= 0.0F
+                || config.hungerDrainCostPerHp <= 0.0D
+                || config.hungerDrainSpeedMultiplier <= 0.0D) {
+            return;
+        }
+
+        double rawDrain = actualHealed * config.hungerDrainCostPerHp * config.hungerDrainSpeedMultiplier;
+        applyHungerDrain(player, playerId, rawDrain, config);
+    }
+
+    private void applyHungerDrainIdle(ServerPlayer player, UUID playerId, long outOfCombatTicks, int cooldownDuration, boolean hungerBlocked, PassiveRegenConfig config) {
+        if (!config.hungerDrainEnabled
+                || config.hungerDrainIdleDrainPerTick <= 0.0D
+                || config.hungerDrainSpeedMultiplier <= 0.0D
+                || hungerBlocked
+                || outOfCombatTicks < cooldownDuration
+                || !player.isAlive()
+                || player.isSpectator()
+                || player.isCreative()
+                || hasBlockedEffect(player, config.blockedEffects)
+                || isDimensionBlacklisted(player, config.dimensionBlacklist)
+                || (!config.regenWhileSprinting && player.isSprinting())
+                || player.getHealth() < player.getMaxHealth() * (config.maxRegenHealthPercent / 100.0F)) {
+            return;
+        }
+
+        double rawDrain = config.hungerDrainIdleDrainPerTick * config.hungerDrainSpeedMultiplier;
+        applyHungerDrain(player, playerId, rawDrain, config);
+    }
+
+    private void applyHungerDrain(ServerPlayer player, UUID playerId, double rawDrain, PassiveRegenConfig config) {
+        if (rawDrain <= 0.0D) {
+            return;
+        }
+
+        int floorFood = (int) Math.ceil(Math.max(0.0D, Math.min(20.0D, config.hungerDrainMinFloor)));
+        int currentFood = player.getFoodData().getFoodLevel();
+        if (currentFood <= floorFood) {
+            hungerDrainRemainders.remove(playerId);
+            return;
+        }
+
+        double totalDrain = hungerDrainRemainders.getOrDefault(playerId, 0.0D) + rawDrain;
+        int availableWholeDrain = Math.max(0, currentFood - floorFood);
+        int wholeDrain = Math.min((int) Math.floor(totalDrain), availableWholeDrain);
+
+        if (wholeDrain > 0) {
+            player.getFoodData().setFoodLevel(currentFood - wholeDrain);
+        }
+
+        int newFood = player.getFoodData().getFoodLevel();
+        if (newFood <= floorFood) {
+            hungerDrainRemainders.remove(playerId);
+            return;
+        }
+
+        double remainder = totalDrain - wholeDrain;
+        if (remainder > 0.0D) {
+            hungerDrainRemainders.put(playerId, Math.min(remainder, 0.999999D));
+        } else {
+            hungerDrainRemainders.remove(playerId);
+        }
     }
 
     private boolean isSaturationBonusActive(ServerPlayer player) {

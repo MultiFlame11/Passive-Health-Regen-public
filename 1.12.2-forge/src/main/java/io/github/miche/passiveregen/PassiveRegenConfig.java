@@ -245,6 +245,27 @@ public class PassiveRegenConfig {
         public boolean saturationBonusScaleByExcess = false;
     }
 
+    public static class HungerDrain {
+        @Config.Comment("Master toggle for optional hunger drain while passive regen is active.")
+        public boolean hungerDrainEnabled = false;
+
+        @Config.Comment("Extra multiplier applied to all hunger-drain costs.")
+        @Config.RangeDouble(min = 0.0D, max = 10.0D)
+        public double hungerDrainSpeedMultiplier = 1.0D;
+
+        @Config.Comment("Hunger consumed per 1 HP healed while hunger drain is enabled.")
+        @Config.RangeDouble(min = 0.0D, max = 10.0D)
+        public double hungerDrainCostPerHp = 0.6D;
+
+        @Config.Comment("Small extra hunger drain applied each server tick while regen is ready at full health.")
+        @Config.RangeDouble(min = 0.0D, max = 1.0D)
+        public double hungerDrainIdleDrainPerTick = 0.0D;
+
+        @Config.Comment("Hunger drain will not push the player below this food level.")
+        @Config.RangeDouble(min = 0.0D, max = 20.0D)
+        public double hungerDrainMinFloor = 0.0D;
+    }
+
     public static class RegenOnKill {
         @Config.Comment("If true, killing an entity reduces the player's damage cooldown.")
         public boolean regenOnKillEnabled = false;
@@ -471,6 +492,7 @@ public class PassiveRegenConfig {
     public static General general = new General();
     public static Limits limits = new Limits();
     public static HungerBonus hungerBonus = new HungerBonus();
+    public static HungerDrain hungerDrain = new HungerDrain();
     public static RegenOnKill regenOnKill = new RegenOnKill();
     public static Bonuses bonuses = new Bonuses();
     public static LargeDamagePenalty largeDamagePenalty = new LargeDamagePenalty();
@@ -518,6 +540,11 @@ public class PassiveRegenConfig {
     @Config.Ignore public static double saturationBonusMinSaturationFloor = 0.0D;
     @Config.Ignore public static double saturationBonusFlatHealBonus = 0.25D;
     @Config.Ignore public static boolean saturationBonusScaleByExcess = false;
+    @Config.Ignore public static boolean hungerDrainEnabled = false;
+    @Config.Ignore public static double hungerDrainSpeedMultiplier = 1.0D;
+    @Config.Ignore public static double hungerDrainCostPerHp = 0.6D;
+    @Config.Ignore public static double hungerDrainIdleDrainPerTick = 0.0D;
+    @Config.Ignore public static double hungerDrainMinFloor = 0.0D;
     @Config.Ignore public static boolean regenOnKillEnabled = false;
     @Config.Ignore public static int regenOnKillCooldownReduction = 50;
     @Config.Ignore public static boolean regenOnKillHostileOnly = false;
@@ -594,6 +621,11 @@ public class PassiveRegenConfig {
         saturationBonusMinSaturationFloor = Math.max(0.0D, Math.min(20.0D, hungerBonus.saturationBonusMinSaturationFloor));
         saturationBonusFlatHealBonus = hungerBonus.saturationBonusFlatHealBonus;
         saturationBonusScaleByExcess = hungerBonus.saturationBonusScaleByExcess;
+        hungerDrainEnabled = hungerDrain.hungerDrainEnabled;
+        hungerDrainSpeedMultiplier = hungerDrain.hungerDrainSpeedMultiplier;
+        hungerDrainCostPerHp = hungerDrain.hungerDrainCostPerHp;
+        hungerDrainIdleDrainPerTick = hungerDrain.hungerDrainIdleDrainPerTick;
+        hungerDrainMinFloor = hungerDrain.hungerDrainMinFloor;
 
         regenOnKillEnabled = regenOnKill.regenOnKillEnabled;
         regenOnKillCooldownReduction = regenOnKill.regenOnKillCooldownReduction;

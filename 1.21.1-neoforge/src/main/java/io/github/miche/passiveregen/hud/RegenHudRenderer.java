@@ -15,11 +15,14 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 
+@OnlyIn(Dist.CLIENT)
 public final class RegenHudRenderer {
     private static final ResourceLocation HUD_LAYER = ResourceLocation.fromNamespaceAndPath(PassiveRegenMod.MODID, "regen_hud");
     private static final ResourceLocation HEART_TEXTURE = ResourceLocation.fromNamespaceAndPath(PassiveRegenMod.MODID, "textures/gui/regen_heart.png");

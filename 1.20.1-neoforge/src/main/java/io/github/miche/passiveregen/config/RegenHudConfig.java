@@ -7,8 +7,11 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.loading.FMLPaths;
 
+@OnlyIn(Dist.CLIENT)
 public final class RegenHudConfig {
     private static final Gson GSON = new GsonBuilder().create();
     private static final Path CONFIG_PATH = FMLPaths.CONFIGDIR.get().resolve("passive-health-regen-hud.json");

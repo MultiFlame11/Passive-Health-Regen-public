@@ -51,6 +51,12 @@ public final class PassiveRegenConfig {
     public static final ModConfigSpec.DoubleValue SATURATION_BONUS_FLAT_HEAL_BONUS;
     public static final ModConfigSpec.BooleanValue SATURATION_BONUS_SCALE_BY_EXCESS;
 
+    public static final ModConfigSpec.BooleanValue HUNGER_DRAIN_ENABLED;
+    public static final ModConfigSpec.DoubleValue HUNGER_DRAIN_SPEED_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue HUNGER_DRAIN_COST_PER_HP;
+    public static final ModConfigSpec.DoubleValue HUNGER_DRAIN_IDLE_DRAIN_PER_TICK;
+    public static final ModConfigSpec.DoubleValue HUNGER_DRAIN_MIN_FLOOR;
+
     public static final ModConfigSpec.BooleanValue DISABLE_HEALING_DURING_POISON;
     public static final ModConfigSpec.BooleanValue DISABLE_HEALING_DURING_WITHER;
 
@@ -156,6 +162,14 @@ public final class PassiveRegenConfig {
         SATURATION_BONUS_MIN_SATURATION_FLOOR = builder.defineInRange("saturationBonusMinSaturationFloor", 0.0D, 0.0D, 20.0D);
         SATURATION_BONUS_FLAT_HEAL_BONUS = builder.defineInRange("saturationBonusFlatHealBonus", 0.25D, 0.0D, 10.0D);
         SATURATION_BONUS_SCALE_BY_EXCESS = builder.define("saturationBonusScaleByExcess", false);
+        builder.pop();
+
+        builder.push("hungerDrain");
+        HUNGER_DRAIN_ENABLED = builder.define("hungerDrainEnabled", false);
+        HUNGER_DRAIN_SPEED_MULTIPLIER = builder.defineInRange("hungerDrainSpeedMultiplier", 1.0D, 0.0D, 10.0D);
+        HUNGER_DRAIN_COST_PER_HP = builder.defineInRange("hungerDrainCostPerHp", 0.6D, 0.0D, 10.0D);
+        HUNGER_DRAIN_IDLE_DRAIN_PER_TICK = builder.defineInRange("hungerDrainIdleDrainPerTick", 0.0D, 0.0D, 1.0D);
+        HUNGER_DRAIN_MIN_FLOOR = builder.defineInRange("hungerDrainMinFloor", 0.0D, 0.0D, 20.0D);
         builder.pop();
 
         builder.push("statusEffects");

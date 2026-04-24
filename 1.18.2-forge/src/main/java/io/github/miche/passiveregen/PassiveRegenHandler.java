@@ -52,6 +52,7 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
     private final Set<UUID> campfireCooldownApplied = new HashSet<>();
     private final Set<UUID> saturationBonusActive = new HashSet<>();
     private final Map<UUID, Float> frozenMaxDuringCooldown = new HashMap<>();
+    private final Map<UUID, Double> hungerDrainRemainders = new HashMap<>();
 
     private MinecraftServer currentServer;
     static volatile long serverTick = 0L;
@@ -226,7 +227,12 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
             return;
         }
 
+        long outOfCombatTicks = Math.max(0L, now - lastDamageTick);
+        int cooldownDuration = getCooldownDuration(playerId, player);
+        boolean hungerBlocked = isHungerBlocked(player, player.getFoodData().getFoodLevel(), outOfCombatTicks);
+
         if (!shouldProcessPlayer(player)) {
+            applyHungerDrainIdle(player, playerId, outOfCombatTicks, cooldownDuration, hungerBlocked);
             return;
         }
 
@@ -235,8 +241,6 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
             return;
         }
 
-        long outOfCombatTicks = Math.max(0L, now - lastDamageTick);
-        int cooldownDuration = getCooldownDuration(playerId, player);
         if (outOfCombatTicks < cooldownDuration
                 && PassiveRegenConfig.CAMPFIRE_REGEN_ENABLED.get()
                 && PassiveRegenConfig.CAMPFIRE_COOLDOWN_REDUCTION_ENABLED.get()
@@ -271,6 +275,10 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
             if (chargedCost > 0.0F) {
                 player.causeFoodExhaustion(chargedCost * 4.0F);
             }
+        }
+
+        if (actualHealed > 0.0F) {
+            applyHungerDrainHealCost(player, playerId, actualHealed);
         }
 
         if (PassiveRegenConfig.SATURATION_BONUS_ENABLED.get()
@@ -324,6 +332,7 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
         hungerOverrides.remove(playerId);
         lastKillTicks.remove(playerId);
         killComboStacks.remove(playerId);
+        hungerDrainRemainders.remove(playerId);
         restoreCooldownStateAfterReconnect(player);
     }
 
@@ -356,6 +365,7 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
         frozenMaxDuringCooldown.remove(playerId);
         campfireCooldownApplied.remove(playerId);
         saturationBonusActive.remove(playerId);
+        hungerDrainRemainders.remove(playerId);
     }
 
     @SubscribeEvent
@@ -378,6 +388,7 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
         frozenMaxDuringCooldown.remove(playerId);
         campfireCooldownApplied.remove(playerId);
         saturationBonusActive.remove(playerId);
+        hungerDrainRemainders.remove(playerId);
         clearSavedCooldownState(player);
     }
 
@@ -468,6 +479,75 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
         double threshold = PassiveRegenConfig.SATURATION_BONUS_THRESHOLD.get();
         double range = Math.max(0.01D, 20.0D - threshold);
         return Math.max(0.0D, Math.min(1.0D, (saturation - threshold) / range));
+    }
+
+    private void applyHungerDrainHealCost(ServerPlayer player, UUID playerId, float actualHealed) {
+        if (!PassiveRegenConfig.HUNGER_DRAIN_ENABLED.get()
+                || actualHealed <= 0.0F
+                || PassiveRegenConfig.HUNGER_DRAIN_COST_PER_HP.get() <= 0.0D
+                || PassiveRegenConfig.HUNGER_DRAIN_SPEED_MULTIPLIER.get() <= 0.0D) {
+            return;
+        }
+
+        double rawDrain = actualHealed
+                * PassiveRegenConfig.HUNGER_DRAIN_COST_PER_HP.get()
+                * PassiveRegenConfig.HUNGER_DRAIN_SPEED_MULTIPLIER.get();
+        applyHungerDrain(player, playerId, rawDrain);
+    }
+
+    private void applyHungerDrainIdle(ServerPlayer player, UUID playerId, long outOfCombatTicks, int cooldownDuration, boolean hungerBlocked) {
+        if (!PassiveRegenConfig.HUNGER_DRAIN_ENABLED.get()
+                || PassiveRegenConfig.HUNGER_DRAIN_IDLE_DRAIN_PER_TICK.get() <= 0.0D
+                || PassiveRegenConfig.HUNGER_DRAIN_SPEED_MULTIPLIER.get() <= 0.0D
+                || hungerBlocked
+                || outOfCombatTicks < cooldownDuration
+                || !player.isAlive()
+                || player.isSpectator()
+                || player.isCreative()
+                || hasBlockedEffect(player, PassiveRegenConfig.BLOCKED_EFFECTS.get())
+                || isDimensionBlacklisted(player, PassiveRegenConfig.DIMENSION_BLACKLIST.get())
+                || (!PassiveRegenConfig.REGEN_WHILE_SPRINTING.get() && player.isSprinting())
+                || player.getHealth() < player.getMaxHealth() * (PassiveRegenConfig.MAX_REGEN_HEALTH_PERCENT.get() / 100.0F)) {
+            return;
+        }
+
+        double rawDrain = PassiveRegenConfig.HUNGER_DRAIN_IDLE_DRAIN_PER_TICK.get()
+                * PassiveRegenConfig.HUNGER_DRAIN_SPEED_MULTIPLIER.get();
+        applyHungerDrain(player, playerId, rawDrain);
+    }
+
+    private void applyHungerDrain(ServerPlayer player, UUID playerId, double rawDrain) {
+        if (rawDrain <= 0.0D) {
+            return;
+        }
+
+        int floorFood = (int) Math.ceil(Math.max(0.0D, Math.min(20.0D, PassiveRegenConfig.HUNGER_DRAIN_MIN_FLOOR.get())));
+        int currentFood = player.getFoodData().getFoodLevel();
+        if (currentFood <= floorFood) {
+            hungerDrainRemainders.remove(playerId);
+            return;
+        }
+
+        double totalDrain = hungerDrainRemainders.getOrDefault(playerId, 0.0D) + rawDrain;
+        int availableWholeDrain = Math.max(0, currentFood - floorFood);
+        int wholeDrain = Math.min((int) Math.floor(totalDrain), availableWholeDrain);
+
+        if (wholeDrain > 0) {
+            player.getFoodData().setFoodLevel(currentFood - wholeDrain);
+        }
+
+        int newFood = player.getFoodData().getFoodLevel();
+        if (newFood <= floorFood) {
+            hungerDrainRemainders.remove(playerId);
+            return;
+        }
+
+        double remainder = totalDrain - wholeDrain;
+        if (remainder > 0.0D) {
+            hungerDrainRemainders.put(playerId, Math.min(remainder, 0.999999D));
+        } else {
+            hungerDrainRemainders.remove(playerId);
+        }
     }
 
     private boolean isSaturationBonusActive(ServerPlayer player) {

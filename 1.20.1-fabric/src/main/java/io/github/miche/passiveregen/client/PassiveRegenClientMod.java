@@ -5,10 +5,13 @@ import io.github.miche.passiveregen.hud.RegenFeedbackHandler;
 import io.github.miche.passiveregen.hud.RegenHudRenderer;
 import io.github.miche.passiveregen.network.RegenHudPacket;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 
+@Environment(EnvType.CLIENT)
 public final class PassiveRegenClientMod implements ClientModInitializer {
     public static RegenHudConfig CONFIG;
 

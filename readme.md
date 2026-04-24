@@ -4,7 +4,7 @@ Adds passive health regeneration for players. Stay out of combat long enough wit
 
 Made mostly because eating food just to top off HP gets old fast, especially with mods that bump up max health.
 
-Current release: **1.3.0**. See [CHANGELOG-1.3.0.md](CHANGELOG-1.3.0.md) for the full release notes and [MODDING.md](MODDING.md) for resource pack / addon author info.
+Current release: **1.3.1**. See [CHANGELOG-1.3.1.md](CHANGELOG-1.3.1.md) for the latest release notes, [CHANGELOG-1.3.0.md](CHANGELOG-1.3.0.md) for the big parity release, and [MODDING.md](MODDING.md) for resource pack / addon author info.
 
 ---
 
@@ -138,6 +138,18 @@ Server config lives at `config/passive-health-regen.json`. HUD config lives at `
 | `saturationBonusMinSaturationFloor` | `0.0` | Drain will not push saturation below this. |
 | `saturationBonusFlatHealBonus` | `0.25` | Flat HP added per heal tick on top of multipliers. |
 | `saturationBonusScaleByExcess` | `false` | When true, bonus scales linearly with saturation above threshold. |
+
+### Hunger drain (1.3.1+)
+
+Optional. Off by default. Drains hunger as you heal the same way the saturation bonus drains saturation. Flip on if you want eating to actually matter for passive regen.
+
+| Option | Default | Description |
+|---|---|---|
+| `hungerDrainEnabled` | `false` | Master toggle. |
+| `hungerDrainSpeedMultiplier` | `1.0` | Scalar on overall drain rate. |
+| `hungerDrainCostPerHp` | `0.6` | Hunger drained per HP healed. |
+| `hungerDrainIdleDrainPerTick` | `0.0` | Passive drain while at full HP. |
+| `hungerDrainMinFloor` | `0.0` | Drain stops at this hunger value. |
 
 ### Healing gates
 

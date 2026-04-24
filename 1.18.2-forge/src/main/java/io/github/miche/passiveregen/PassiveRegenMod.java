@@ -13,7 +13,7 @@ import net.minecraftforge.fml.config.ModConfig;
 public class PassiveRegenMod {
     public static final String MODID = "passiveregen";
     public static final String NAME = "Passive Health Regen";
-public static final String VERSION = "1.3.0+1.18.2-forge";
+    public static final String VERSION = "1.3.1+1.18.2-forge";
 
     public PassiveRegenMod() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, PassiveRegenConfig.SPEC);
