@@ -133,7 +133,7 @@ public final class PassiveRegenConfig {
         BLOCKED_EFFECTS = builder.defineList("blockedEffects", Collections.emptyList(), PassiveRegenConfig::isString);
         DIMENSION_BLACKLIST = builder.defineList("dimensionBlacklist", Collections.emptyList(), PassiveRegenConfig::isString);
         PVP_DAMAGE_COOLDOWN_TICKS = builder.defineInRange("pvpDamageCooldownTicks", -1, -1, 12000);
-        DISABLE_NATURAL_REGEN = builder.define("disableNaturalRegen", false);
+        DISABLE_NATURAL_REGEN = builder.comment("If true, vanilla natural regeneration is disabled with the naturalRegeneration gamerule.").define("disableNaturalRegen", true);
         REGEN_WHILE_SPRINTING = builder.define("regenWhileSprinting", true);
         builder.pop();
 

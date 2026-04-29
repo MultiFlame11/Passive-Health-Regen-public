@@ -170,7 +170,7 @@ public final class RegenHudRenderer {
     }
 
     public void onAddLayers(RegisterGuiLayersEvent event) {
-        event.registerAbove(VanillaGuiLayers.PLAYER_HEALTH, HUD_LAYER,
+        event.registerAbove(VanillaGuiLayers.HOTBAR, HUD_LAYER,
             (guiGraphics, deltaTracker) -> render(guiGraphics, deltaTracker.getGameTimeDeltaTicks()));
     }
 

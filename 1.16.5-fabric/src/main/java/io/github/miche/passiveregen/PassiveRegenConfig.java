@@ -32,7 +32,7 @@ public final class PassiveRegenConfig {
     public String[] blockedEffects = new String[0];
     public String[] dimensionBlacklist = new String[0];
     public int pvpDamageCooldownTicks = -1;
-    public boolean disableNaturalRegen = false;
+    public boolean disableNaturalRegen = true;
     public boolean regenWhileSprinting = true;
 
     public boolean hungerBonusEnabled = false;

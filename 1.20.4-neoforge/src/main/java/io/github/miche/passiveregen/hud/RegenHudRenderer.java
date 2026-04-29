@@ -168,9 +168,22 @@ public final class RegenHudRenderer {
         RegenHudState.get().reset();
     }
 
+    private static ResourceLocation resolveOverlayId(String name) {
+        if (name == null) return VanillaGuiOverlay.PLAYER_HEALTH.id();
+        return switch (name.trim().toUpperCase(Locale.ROOT)) {
+            case "HOTBAR" -> VanillaGuiOverlay.HOTBAR.id();
+            case "FOOD_LEVEL" -> VanillaGuiOverlay.FOOD_LEVEL.id();
+            case "EXPERIENCE_BAR" -> VanillaGuiOverlay.EXPERIENCE_BAR.id();
+            case "JUMP_BAR" -> VanillaGuiOverlay.JUMP_BAR.id();
+            default -> VanillaGuiOverlay.PLAYER_HEALTH.id();
+        };
+    }
+
     @SubscribeEvent
     public void onRender(RenderGuiOverlayEvent.Post event) {
-        if (!event.getOverlay().id().equals(VanillaGuiOverlay.PLAYER_HEALTH.id())) {
+        RegenHudConfig cfg = PassiveRegenClient.HOLDER.config;
+        ResourceLocation target = resolveOverlayId(cfg != null ? cfg.hudRenderOverlay : null);
+        if (!event.getOverlay().id().equals(target)) {
             return;
         }
 
@@ -181,7 +194,7 @@ public final class RegenHudRenderer {
             return;
         }
 
-        RegenHudConfig config = PassiveRegenClient.HOLDER.config;
+        RegenHudConfig config = cfg;
         RegenHudState state = RegenHudState.get();
         boolean logicallyVisible = shouldRender(config, state);
         float fadeAlpha = config.hudFadeEnabled
