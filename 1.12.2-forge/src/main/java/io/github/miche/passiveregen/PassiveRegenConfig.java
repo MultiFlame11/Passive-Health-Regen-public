@@ -125,7 +125,7 @@ public class PassiveRegenConfig {
         public int pvpDamageCooldownTicks = -1;
 
         @Config.Comment("If true, vanilla natural regeneration is disabled.")
-        public boolean disableNaturalRegen = true;
+        public boolean disableNaturalRegen = false;
 
         @Config.Comment("If false, passive regen is paused while sprinting.")
         public boolean regenWhileSprinting = true;
@@ -515,7 +515,7 @@ public class PassiveRegenConfig {
     @Config.Ignore public static String[] blockedEffects = new String[0];
     @Config.Ignore public static String[] dimensionBlacklist = new String[0];
     @Config.Ignore public static int pvpDamageCooldownTicks = -1;
-    @Config.Ignore public static boolean disableNaturalRegen = true;
+    @Config.Ignore public static boolean disableNaturalRegen = false;
     @Config.Ignore public static boolean regenWhileSprinting = true;
     @Config.Ignore public static boolean disableHealingDuringPoison = true;
     @Config.Ignore public static boolean disableHealingDuringWither = true;

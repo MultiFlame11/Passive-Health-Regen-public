@@ -135,7 +135,7 @@ public final class PassiveRegenConfig {
         PVP_DAMAGE_COOLDOWN_TICKS = builder.defineInRange("pvpDamageCooldownTicks", -1, -1, 12000);
         DISABLE_NATURAL_REGEN = builder
             .comment("If true, vanilla natural regeneration is disabled with the naturalRegeneration gamerule.")
-            .define("disableNaturalRegen", true);
+            .define("disableNaturalRegen", false);
         REGEN_WHILE_SPRINTING = builder.define("regenWhileSprinting", true);
         builder.pop();
 

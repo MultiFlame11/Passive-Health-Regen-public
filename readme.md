@@ -100,7 +100,7 @@ Server config lives at `config/passive-health-regen.json`. HUD config lives at `
 | `blockedEffects` | `[]` | Effect IDs that pause regen. |
 | `dimensionBlacklist` | `[]` | Dimensions where regen is disabled. |
 | `pvpDamageCooldownTicks` | `-1` | Separate cooldown after PvP damage. -1 = same as regular. |
-| `disableNaturalRegen` | `false` | Drains food exhaustion to suppress vanilla natural regen. |
+| `disableNaturalRegen` | `false` | Disables vanilla natural regen through the `naturalRegeneration` gamerule. |
 | `regenWhileSprinting` | `true` | If false, regen is paused while sprinting. |
 
 ### Hunger bonus
