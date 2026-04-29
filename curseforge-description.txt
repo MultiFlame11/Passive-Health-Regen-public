@@ -1,11 +1,8 @@
-<span style="color:#b96ad9"><strong>IF YOU WANT A SPECIFIC VERSION MADE FEEL FREE TO COMMENT!!!</strong></span>
-<span style="color:#2dc26b"><strong>1.3.1 is out! New optional hunger drain knobs and a HUD config fix for dedicated servers. See the changelog for details.</strong></span>
+<span style="color:#b96ad9"><strong>IF YOU WANT A SPECIFIC VERSION MADE FEEL FREE TO COMMENT!!!</strong></span> <span style="color:#2dc26b"><strong>1.3.1 is out! New optional hunger drain tunables, and fixed a stray HUD config file that was generating on dedicated servers.</strong></span>
 
 # Passive Health Regen
 
-Out-of-combat healing for players. Stay out of a fight long enough with enough food and you heal up on your own. No potion needed.
-
-Made mostly because eating just to top off HP every 30 seconds gets old fast, especially in packs with bigger health pools.
+Out-of-combat healing for players. Stay out of a fight long enough with enough food and you heal up on your own. No potion needed. Made mostly because eating just to top off HP every 30 seconds gets old fast, especially in packs with bigger health pools.
 
 ## <span style="color:#3598db">Features</span>
 
@@ -18,7 +15,7 @@ Made mostly because eating just to top off HP every 30 seconds gets old fast, es
 *   **poison and wither healing gates**
 *   **regen on kill with optional combo stacking**
 *   **campfire proximity bonuses <span style="color:#e67e23">(1.20.1+)</span>**
-*   **freezing penalty in powder snow <span style="color:#6FB8E8">(1.18.2+)</span>**
+*   **freezing penalty in powder snow <span style="color:#6fb8e8">(1.18.2+)</span>**
 *   **crouch, light level, day/night, and difficulty modifiers**
 *   **large damage cooldown penalty**
 *   **reconnect cooldown persistence**
@@ -35,9 +32,7 @@ __**Out of the box:**__
 *   **saturation bonus on**
 *   **campfire bonuses on (where supported)**
 *   **freezing penalty on (where supported)**
-*   **poison and wither gates on**
-
-Light and steady, not aggressive. All knobs are in the config file.
+*   **poison and wither gates on** Light and steady, not aggressive. All knobs are in the config file.
 
 ## <span style="color:#3598db">Versions</span>
 
@@ -48,9 +43,7 @@ __**Every version has full gameplay and the HUD. <span style="color:#f1c40f">1.2
 *   **1.18.2 Fabric / Forge**
 *   **1.20.1 Fabric / Forge / NeoForge**
 *   **1.20.4 NeoForge**
-*   **1.21.1 Fabric / Forge / NeoForge**
-
-Freezing is 1.18.2+ only since vanilla freeze damage didn't exist before 1.17.
+*   **1.21.1 Fabric / Forge / NeoForge** Freezing is 1.18.2+ only since vanilla freeze damage didn't exist before 1.17.
 
 ## <span style="color:#3598db">Addon</span>
 

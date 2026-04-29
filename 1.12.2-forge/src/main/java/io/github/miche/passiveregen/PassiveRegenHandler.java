@@ -217,12 +217,7 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
 
         int cooldownDuration = getCooldownDuration(playerId, player);
         boolean hungerBlocked = isHungerBlocked(player, player.getFoodStats().getFoodLevel(), outOfCombatTicks);
-
-        if (PassiveRegenConfig.disableNaturalRegen) {
-            if (player.getFoodStats().getFoodLevel() >= 18 && player.getFoodStats().getSaturationLevel() > 0) {
-                player.addExhaustion(0.1F);
-            }
-        }
+        syncNaturalRegenGameRule(FMLCommonHandler.instance().getMinecraftServerInstance());
 
         if (lastDamageTick == null) {
             syncHudState(serverPlayer, 0L, 0, false, false, false, PassiveRegenConfig.maxRegenHealthPercent);
@@ -262,7 +257,7 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
                     player.heal(healAmount);
                     float actualHealed = Math.max(0.0F, player.getHealth() - beforeHealth);
                     if (actualHealed > 0.0F) {
-                        applySaturationBonusHealCost(player, actualHealed);
+                        applySaturationBonusHealCost(player, actualHealed, hungerBlocked);
                         applyHungerDrainHealCost(player, playerId, actualHealed);
                     }
                     MinecraftForge.EVENT_BUS.post(new PassiveRegenTickEvent.Post(player, actualHealed > 0.0F ? actualHealed : healAmount));
@@ -276,7 +271,7 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
             }
         }
 
-        applySaturationBonusIdleDrain(player);
+        applySaturationBonusIdleDrain(player, hungerBlocked);
 
         syncHudState(serverPlayer, outOfCombatTicks, cooldownDuration, regenActive, hungerBlocked, justHealed, PassiveRegenConfig.maxRegenHealthPercent);
     }
@@ -292,6 +287,12 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
         killComboStacks.remove(playerId);
         saturationBonusActive.remove(playerId);
         hungerDrainRemainders.remove(playerId);
+    }
+    private static void syncNaturalRegenGameRule(MinecraftServer server) {
+        if (server == null || !PassiveRegenConfig.enabled || !PassiveRegenConfig.disableNaturalRegen || server.getEntityWorld() == null) {
+            return;
+        }
+        server.getEntityWorld().getGameRules().setOrCreateGameRule("naturalRegeneration", "false");
     }
 
     @SubscribeEvent
@@ -363,7 +364,7 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
 
         double healAmount = Math.max(0.01D, PassiveRegenConfig.healAmountPerTrigger);
         double scaledHeal = healAmount * getMaxHealthScaleMultiplier(player.getMaxHealth());
-        double saturationStrength = getSaturationBonusStrength(player);
+        double saturationStrength = hungerPenalized ? 0.0D : getSaturationBonusStrength(player);
         if (saturationStrength > 0.0D && PassiveRegenConfig.saturationBonusFlatHealBonus > 0.0D) {
             scaledHeal += PassiveRegenConfig.saturationBonusFlatHealBonus * saturationStrength;
         }
@@ -387,10 +388,12 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
             if (hungerHeal != 1.0D) multipliers.add(hungerHeal);
         }
 
-        double saturationStrength = getSaturationBonusStrength(player);
-        if (saturationStrength > 0.0D && PassiveRegenConfig.saturationBonusHealMultiplier != 1.0D) {
-            double rawMultiplier = Math.max(1.0D, PassiveRegenConfig.saturationBonusHealMultiplier);
-            multipliers.add(1.0D + (rawMultiplier - 1.0D) * saturationStrength);
+        if (!hungerPenalized) {
+            double saturationStrength = getSaturationBonusStrength(player);
+            if (saturationStrength > 0.0D && PassiveRegenConfig.saturationBonusHealMultiplier != 1.0D) {
+                double rawMultiplier = Math.max(1.0D, PassiveRegenConfig.saturationBonusHealMultiplier);
+                multipliers.add(1.0D + (rawMultiplier - 1.0D) * saturationStrength);
+            }
         }
 
         if (PassiveRegenConfig.crouchBonusEnabled && player.isSneaking() && PassiveRegenConfig.crouchHealMultiplier != 1.0D) {
@@ -413,10 +416,12 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
             if (hungerSpeed != 1.0D) multipliers.add(hungerSpeed);
         }
 
-        double saturationStrength = getSaturationBonusStrength(player);
-        if (saturationStrength > 0.0D && PassiveRegenConfig.saturationBonusSpeedMultiplier != 1.0D) {
-            double rawMultiplier = Math.max(1.0D, PassiveRegenConfig.saturationBonusSpeedMultiplier);
-            multipliers.add(1.0D + (rawMultiplier - 1.0D) * saturationStrength);
+        if (!hungerPenalized) {
+            double saturationStrength = getSaturationBonusStrength(player);
+            if (saturationStrength > 0.0D && PassiveRegenConfig.saturationBonusSpeedMultiplier != 1.0D) {
+                double rawMultiplier = Math.max(1.0D, PassiveRegenConfig.saturationBonusSpeedMultiplier);
+                multipliers.add(1.0D + (rawMultiplier - 1.0D) * saturationStrength);
+            }
         }
 
         if (PassiveRegenConfig.crouchBonusEnabled && player.isSneaking() && PassiveRegenConfig.crouchSpeedMultiplier != 1.0D) {
@@ -496,9 +501,10 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
         return multiplier;
     }
 
-    private void applySaturationBonusHealCost(EntityPlayer player, float actualHealed) {
+    private void applySaturationBonusHealCost(EntityPlayer player, float actualHealed, boolean hungerBlocked) {
         if (actualHealed <= 0.0F
                 || !PassiveRegenConfig.saturationBonusEnabled
+                || hungerBlocked
                 || PassiveRegenConfig.saturationBonusCostPerHp <= 0.0D
                 || !saturationBonusActive.contains(player.getUniqueID())) {
             return;
@@ -514,8 +520,9 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
         }
     }
 
-    private void applySaturationBonusIdleDrain(EntityPlayer player) {
+    private void applySaturationBonusIdleDrain(EntityPlayer player, boolean hungerBlocked) {
         if (!PassiveRegenConfig.saturationBonusEnabled
+                || hungerBlocked
                 || PassiveRegenConfig.saturationBonusIdleDrainPerTick <= 0.0D
                 || !saturationBonusActive.contains(player.getUniqueID())) {
             return;
@@ -836,7 +843,7 @@ public class PassiveRegenHandler implements IPassiveRegenInternals {
 
     private void syncHudState(EntityPlayerMP player, long outOfCombatTicks, int damageCooldownTicks, boolean regenActive, boolean hungerBlocked, boolean justHealed, int maxRegenHealthPercent) {
         UUID playerId = player.getUniqueID();
-        boolean saturationBonus = isSaturationBonusActive(player);
+        boolean saturationBonus = !hungerBlocked && isSaturationBonusActive(player);
         boolean poisoned = player.isPotionActive(ForgeRegistries.POTIONS.getValue(new ResourceLocation("minecraft", "poison")));
         boolean withered = player.isPotionActive(ForgeRegistries.POTIONS.getValue(new ResourceLocation("minecraft", "wither")));
         HudSyncState current = new HudSyncState(outOfCombatTicks, damageCooldownTicks, regenActive, hungerBlocked, player.getHealth(), player.getMaxHealth(), maxRegenHealthPercent, saturationBonus, poisoned, withered);

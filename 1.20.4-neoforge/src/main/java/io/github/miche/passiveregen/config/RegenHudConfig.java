@@ -26,6 +26,7 @@ public final class RegenHudConfig {
     public String hudBlockedColor = "FF9F1A";
     public double hudScale = 1.0D;
     public String hudPosition = "LEFT_OF_HEALTH";
+    public String hudRenderOverlay = "PLAYER_HEALTH";
     public int hudOffsetX = 0;
     public int hudOffsetY = 0;
     public String hudCustomAnchor = "TOP_LEFT";
@@ -85,6 +86,7 @@ public final class RegenHudConfig {
         copy.hudBlockedColor = hudBlockedColor;
         copy.hudScale = hudScale;
         copy.hudPosition = hudPosition;
+        copy.hudRenderOverlay = hudRenderOverlay;
         copy.hudOffsetX = hudOffsetX;
         copy.hudOffsetY = hudOffsetY;
         copy.hudCustomAnchor = hudCustomAnchor;
@@ -121,6 +123,7 @@ public final class RegenHudConfig {
         hudBlockedColor = other.hudBlockedColor;
         hudScale = other.hudScale;
         hudPosition = other.hudPosition;
+        hudRenderOverlay = other.hudRenderOverlay;
         hudOffsetX = other.hudOffsetX;
         hudOffsetY = other.hudOffsetY;
         hudCustomAnchor = other.hudCustomAnchor;
@@ -164,6 +167,9 @@ public final class RegenHudConfig {
                 writer.write("  \"hudScale\": " + hudScale + ","); writer.newLine();
                 writer.write("  // Presets: RIGHT_OF_HEALTH, LEFT_OF_HEALTH, ABOVE_HUNGER, BELOW_HUNGER, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, CUSTOM"); writer.newLine();
                 writer.write("  \"hudPosition\": \"" + escape(hudPosition) + "\","); writer.newLine();
+                writer.write("  // Overlay trigger. Try HOTBAR or FOOD_LEVEL if another mod hides the vanilla health layer."); writer.newLine();
+                writer.write("  // Options: PLAYER_HEALTH, HOTBAR, FOOD_LEVEL, EXPERIENCE_BAR, JUMP_BAR"); writer.newLine();
+                writer.write("  \"hudRenderOverlay\": \"" + escape(hudRenderOverlay) + "\","); writer.newLine();
                 writer.write("  \"hudOffsetX\": " + hudOffsetX + ","); writer.newLine();
                 writer.write("  \"hudOffsetY\": " + hudOffsetY + ","); writer.newLine();
                 writer.write("  // Anchors for CUSTOM: CENTER, TOP, BOTTOM, LEFT, RIGHT, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT"); writer.newLine();
@@ -245,6 +251,7 @@ public final class RegenHudConfig {
         hudFreezingShakeSpeedHz = clampDouble(hudFreezingShakeSpeedHz, 0.0D, 60.0D);
         hudFreezingSnowCount = clampInt(hudFreezingSnowCount, 0, 24);
         if (hudPosition == null || hudPosition.isBlank()) hudPosition = "LEFT_OF_HEALTH";
+        if (hudRenderOverlay == null || hudRenderOverlay.isBlank()) hudRenderOverlay = "PLAYER_HEALTH";
         if (hudCustomAnchor == null || hudCustomAnchor.isBlank()) hudCustomAnchor = "TOP_LEFT";
         if (showCondition == null || showCondition.isBlank()) showCondition = "injured";
         if (particles == null) particles = new ParticleEntry[0];

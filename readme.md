@@ -4,7 +4,7 @@ Adds passive health regeneration for players. Stay out of combat long enough wit
 
 Made mostly because eating food just to top off HP gets old fast, especially with mods that bump up max health.
 
-Current release: **1.3.1**. See [CHANGELOG-1.3.1.md](CHANGELOG-1.3.1.md) for the latest release notes, [CHANGELOG-1.3.0.md](CHANGELOG-1.3.0.md) for the big parity release, and [MODDING.md](MODDING.md) for resource pack / addon author info.
+Current release: **1.3.2**. See [CHANGELOG-1.3.2.md](CHANGELOG-1.3.2.md) for the latest release notes, [CHANGELOG-1.3.1.md](CHANGELOG-1.3.1.md) for the previous patch, [CHANGELOG-1.3.0.md](CHANGELOG-1.3.0.md) for the big parity release, and [MODDING.md](MODDING.md) for resource pack / addon author info.
 
 ---
 

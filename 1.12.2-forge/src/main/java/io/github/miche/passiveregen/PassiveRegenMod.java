@@ -1,6 +1,8 @@
 package io.github.miche.passiveregen;
 
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.config.Config;
+import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -25,6 +27,8 @@ public class PassiveRegenMod {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        ConfigManager.sync(MODID, Config.Type.INSTANCE);
+        PassiveRegenConfig.syncAliases();
         MinecraftForge.EVENT_BUS.register(new PassiveRegenHandler());
         NetworkHandler.registerMessages();
         PROXY.preInit(event);
