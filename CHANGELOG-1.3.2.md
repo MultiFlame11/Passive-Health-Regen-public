@@ -1,33 +1,27 @@
 # Passive Health Regen 1.3.2
 
-Cleanup pass on top of 1.3.1. Mostly fixes and one structural change to how `disableNaturalRegen` actually works.
+Small cleanup patch on top of 1.3.1.
 
 ## Changed
 
-`disableNaturalRegen` now toggles the vanilla `naturalRegeneration` gamerule directly. The old behavior leaned on exhaustion based soft suppression, which had edge cases where vanilla regen could still tick through. Going through the gamerule is the right hook and makes it a hard off when the toggle is on.
-
-Default for `disableNaturalRegen` flipped to `true` on fresh configs. The mod is opinionated about owning the regen loop so the new default reflects that. Old configs are not touched (see Upgrading below).
+- `disableNaturalRegen` now uses the vanilla `naturalRegeneration` gamerule when you turn it on.
+- Fresh configs keep `disableNaturalRegen=false` by default.
 
 ## Fixed
 
-Saturation bonus could still apply when the player was in the hunger or saturation penalty state. The bonus now correctly stays off while the penalty state is active.
-
-Saturation bonus HUD sheen had the same bleed through in the penalty state. The visual now stays off too, matching the gameplay state.
-
-Removed a temporary `1.20.1-forge` debug config field and logger that snuck into 1.3.1. Pure dead code, no behavior impact, but it was generating extra log lines and an unused config knob on that one build only. Gone now.
+- Saturation bonus no longer kicks in while the hunger or saturation penalty state is active.
+- Saturation HUD sheen now stays off in that same penalty state.
+- Removed the stray `1.20.1-forge` debug config field and logger from `1.3.1`.
 
 ## Added
 
-Modern HUD compatibility with mods that replace the vanilla health bar:
-
-- `1.20.1-neoforge` and `1.20.4-neoforge` now use `hudRenderOverlay` for the heart paint, same hook that `1.20.1-forge` already uses. Lets HUD replacement mods cleanly pass the heart render through instead of stomping it.
-- `1.21.1-neoforge` HUD render layer moved to draw above the hotbar, matching where `1.21.1-forge` draws. Was rendering one layer off from the forge sibling, which read as a small visual mismatch when running the same setup on the two loaders.
+- Better HUD compatibility for modern HUD replacement mods.
+- `1.20.1-neoforge` and `1.20.4-neoforge` now expose `hudRenderOverlay`.
+- `1.21.1-neoforge` HUD draw order now matches the Forge build.
 
 ## Upgrading
 
-Existing configs are not auto migrated. If you upgrade and want vanilla natural regen actually disabled, check your config and set `disableNaturalRegen=true` by hand. Or delete the config to regenerate it with the new defaults. Fresh installs get the right default automatically.
-
-No other migration steps. The saturation and HUD fixes apply on next tick.
+No migration needed. Existing configs keep their own value for `disableNaturalRegen`.
 
 ## Build coverage
 
