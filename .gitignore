@@ -45,3 +45,4 @@ bump_build_gradle.ps1
 copy_jars*.ps1
 install_preview.ps1
 gen_bandage_textures.py
+.gradle-user-home/

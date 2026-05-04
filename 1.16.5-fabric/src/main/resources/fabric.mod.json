@@ -11,10 +11,10 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "io.github.miche.passiveregen.PassiveRegenMod"
+      "com.multiflame.passiveregen.PassiveRegenMod"
     ],
     "client": [
-      "io.github.miche.passiveregen.client.PassiveRegenClientMod"
+      "com.multiflame.passiveregen.client.PassiveRegenClientMod"
     ]
   },
   "depends": {

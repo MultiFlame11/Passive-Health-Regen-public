@@ -2,8 +2,8 @@ plugins {
     id 'net.neoforged.gradle.userdev' version '7.0.192'
 }
 
-version = '1.3.2'
-group = 'io.github.miche.passiveregen'
+version = '1.3.3'
+group = 'com.multiflame.passiveregen'
 
 java {
     toolchain {
