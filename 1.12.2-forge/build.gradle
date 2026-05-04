@@ -12,8 +12,8 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '1.3.2+1.12.2-forge'
-group = 'io.github.miche.passiveregen'
+version = '1.3.3+1.12.2-forge'
+group = 'com.multiflame.passiveregen'
 archivesBaseName = 'passive-health-regen'
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'

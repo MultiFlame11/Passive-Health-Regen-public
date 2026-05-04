@@ -9,8 +9,8 @@ tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
-version = '1.3.2+1.21.1-neoforge'
-group = 'io.github.miche.passiveregen'
+version = '1.3.3+1.21.1-neoforge'
+group = 'com.multiflame.passiveregen'
 
 base {
     archivesName = 'passive-health-regen'
