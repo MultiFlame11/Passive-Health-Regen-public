@@ -13,7 +13,7 @@ apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
 version = '1.3.3+1.16.5-forge'
-group = 'com.multiflame.passiveregen'
+group = 'io.github.miche.passiveregen'
 archivesBaseName = 'passive-health-regen'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(8)

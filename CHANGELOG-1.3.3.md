@@ -1,32 +1,27 @@
 # Passive Health Regen 1.3.3
 
-Compatibility and persistence patch on top of 1.3.2.
+Small bugfix patch on top of 1.3.2.
 
-## Changed
-
-- Public package and Maven namespace now use `com.multiflame.passiveregen` across all version branches.
+No new gameplay features here. This one just fixes a couple of annoying problems.
 
 ## Fixed
 
-- Fabric cooldown persistence now fails soft when the reconnect cooldown save file contains malformed JSON.
-- Fabric cooldown persistence now writes through a temp file before replacing the live save, which reduces the chance of leaving a broken JSON file behind after an interrupted write.
-- Ramp-up timing now starts after the passive regen cooldown finishes instead of sharing the same out-of-combat timer.
-
-## Added
-
-- Updated release and workflow metadata for the new `1.3.3` version line.
+- Fixed a Fabric reconnect crash if the cooldown save file had malformed JSON. It now falls back to an empty cooldown map and keeps going. This affects the Fabric builds on 1.16.5, 1.18.2, 1.20.1, and 1.21.1.
+- Fabric cooldown saves now write through a temp file first, so a bad shutdown is a lot less likely to leave the file corrupted.
+- Fixed ramp-up timing so it starts after the damage cooldown ends. Before this, the damage cooldown and ramp-up were eating the same timer, which meant regen could start partway through its ramp instead of getting the full ramp window.
 
 ## Upgrading
 
-- If an older Fabric jar already left behind a broken cooldown save, delete `world/data/passive-health-regen-cooldowns.json` once and let the mod regenerate it.
-- API users and integrations should update imports from `io.github.miche.passiveregen...` to `com.multiflame.passiveregen...`.
+- Existing configs are not touched.
+- If an older Fabric build already left behind a broken cooldown save, delete `world/data/passive-health-regen-cooldowns.json` once and let the mod regenerate it.
+- Addon and API users do not need to change imports for `1.3.3`. The public API namespace is still `io.github.miche.passiveregen...`.
 
 ## Build coverage
 
-Verified clean after this patch:
+All 12 builds were checked and all 12 compile:
 
-1.12.2 Forge, 1.16.5 Fabric, 1.16.5 Forge, 1.18.2 Fabric, 1.18.2 Forge, 1.20.1 Fabric, 1.20.1 Forge, 1.20.1 NeoForge, 1.20.4 NeoForge, 1.21.1 Fabric, 1.21.1 Forge, 1.21.1 NeoForge.
+1.12.2 Forge, 1.16.5 Forge, 1.16.5 Fabric, 1.18.2 Forge, 1.18.2 Fabric, 1.20.1 Forge, 1.20.1 Fabric, 1.20.1 NeoForge, 1.20.4 NeoForge, 1.21.1 Forge, 1.21.1 Fabric, 1.21.1 NeoForge.
 
 ## Issues
 
-If something breaks, open an issue with your version, loader, and config. Makes debugging way faster.
+If something breaks, open an issue with your version, loader, and config. That makes it way easier to track down.
