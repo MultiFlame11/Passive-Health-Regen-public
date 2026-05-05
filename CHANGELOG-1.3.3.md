@@ -14,7 +14,6 @@ No new gameplay features here. This one just fixes a couple of annoying problems
 
 - Existing configs are not touched.
 - If an older Fabric build already left behind a broken cooldown save, delete `world/data/passive-health-regen-cooldowns.json` once and let the mod regenerate it.
-- Addon and API users do not need to change imports for `1.3.3`. The public API namespace is still `io.github.miche.passiveregen...`.
 
 ## Build coverage
 
